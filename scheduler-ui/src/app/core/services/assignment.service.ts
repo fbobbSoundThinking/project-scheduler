@@ -27,6 +27,10 @@ export class AssignmentService {
     return this.http.post<Assignment>(this.apiUrl, assignment);
   }
 
+  updateAssignment(id: number, assignment: Assignment): Observable<Assignment> {
+    return this.http.put<Assignment>(`${this.apiUrl}/${id}`, assignment);
+  }
+
   deleteAssignment(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

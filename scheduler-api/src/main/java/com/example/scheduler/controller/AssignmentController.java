@@ -36,6 +36,23 @@ public class AssignmentController {
         return assignmentRepository.save(assignment);
     }
     
+    @PutMapping("/{id}")
+    public ResponseEntity<Assignment> updateAssignment(
+            @PathVariable Integer id, 
+            @RequestBody Assignment assignment) {
+        return assignmentRepository.findById(id)
+                .map(existingAssignment -> {
+                    existingAssignment.setStartDate(assignment.getStartDate());
+                    existingAssignment.setEndDate(assignment.getEndDate());
+                    if (assignment.getRatio() != null) {
+                        existingAssignment.setRatio(assignment.getRatio());
+                    }
+                    Assignment updated = assignmentRepository.save(existingAssignment);
+                    return ResponseEntity.ok(updated);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAssignment(@PathVariable Integer id) {
         return assignmentRepository.findById(id)

@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProjectService } from '../../../core/services/project.service';
-import { Project } from '../../../core/models';
+import { AssignmentService } from '../../../core/services/assignment.service';
+import { Project, Assignment } from '../../../core/models';
 
 @Component({
   selector: 'app-project-list',
@@ -19,6 +20,11 @@ export class ProjectList implements OnInit {
   loading: boolean = false;
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+  
+  // Edit state
+  editingAssignmentId: number | null = null;
+  editedDates: { [key: number]: { start: string, end: string } } = {};
+  savingAssignmentId: number | null = null;
 
   statuses = [
     { value: 'all', label: 'All Projects' },
@@ -28,7 +34,10 @@ export class ProjectList implements OnInit {
     { value: 'Internal Tracking', label: 'Internal Tracking' }
   ];
 
-  constructor(private projectService: ProjectService) {}
+  constructor(
+    private projectService: ProjectService,
+    private assignmentService: AssignmentService
+  ) {}
 
   ngOnInit(): void {
     this.loadProjects();
@@ -183,5 +192,65 @@ export class ProjectList implements OnInit {
       case 'Internal Tracking': return 'status-internal';
       default: return '';
     }
+  }
+
+  // Assignment date editing methods
+  isEditing(assignmentId?: number): boolean {
+    return this.editingAssignmentId === assignmentId;
+  }
+
+  isSaving(assignmentId?: number): boolean {
+    return this.savingAssignmentId === assignmentId;
+  }
+
+  startEditingDates(assignment: Assignment): void {
+    if (!assignment.assignmentsId) return;
+    
+    this.editingAssignmentId = assignment.assignmentsId;
+    this.editedDates[assignment.assignmentsId] = {
+      start: assignment.startDate || '',
+      end: assignment.endDate || ''
+    };
+  }
+
+  saveAssignmentDates(assignment: Assignment): void {
+    if (!assignment.assignmentsId) return;
+    
+    const edited = this.editedDates[assignment.assignmentsId];
+    this.savingAssignmentId = assignment.assignmentsId;
+    
+    // Create updated assignment object
+    const updatedAssignment: Assignment = {
+      ...assignment,
+      startDate: edited.start || undefined,
+      endDate: edited.end || undefined
+    };
+    
+    this.assignmentService.updateAssignment(
+      assignment.assignmentsId,
+      updatedAssignment
+    ).subscribe({
+      next: (result) => {
+        // Update the assignment in the local data
+        assignment.startDate = result.startDate;
+        assignment.endDate = result.endDate;
+        
+        this.editingAssignmentId = null;
+        this.savingAssignmentId = null;
+        delete this.editedDates[assignment.assignmentsId!];
+        
+        console.log('Assignment dates updated successfully');
+      },
+      error: (err) => {
+        console.error('Error updating assignment dates:', err);
+        this.savingAssignmentId = null;
+        alert('Error updating assignment dates. Please try again.');
+      }
+    });
+  }
+
+  cancelEdit(): void {
+    this.editingAssignmentId = null;
+    this.editedDates = {};
   }
 }

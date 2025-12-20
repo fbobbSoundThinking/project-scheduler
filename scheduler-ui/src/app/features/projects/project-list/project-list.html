@@ -157,16 +157,55 @@
                 <span class="developer-name">
                   {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
                 </span>
-                <span class="developer-dates" *ngIf="assignment.startDate || assignment.endDate">
-                  <span class="date-range">
-                    {{assignment.startDate ? (assignment.startDate | date:'MMM d, y') : 'No start'}}
-                    <span class="date-separator">→</span>
-                    {{assignment.endDate ? (assignment.endDate | date:'MMM d, y') : 'No end'}}
+                
+                <!-- View Mode -->
+                <div *ngIf="!isEditing(assignment.assignmentsId)" class="developer-dates view-mode">
+                  <span class="date-range" (click)="startEditingDates(assignment)">
+                    <span *ngIf="assignment.startDate || assignment.endDate">
+                      {{assignment.startDate ? (assignment.startDate | date:'MMM d, y') : 'No start'}}
+                      <span class="date-separator">→</span>
+                      {{assignment.endDate ? (assignment.endDate | date:'MMM d, y') : 'No end'}}
+                    </span>
+                    <span *ngIf="!assignment.startDate && !assignment.endDate" class="no-dates">
+                      (No dates set)
+                    </span>
+                    <span class="edit-icon">✏️</span>
                   </span>
-                </span>
-                <span class="developer-dates no-dates" *ngIf="!assignment.startDate && !assignment.endDate">
-                  (No dates set)
-                </span>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div *ngIf="isEditing(assignment.assignmentsId)" class="developer-dates edit-mode">
+                  <div class="date-inputs">
+                    <input 
+                      type="date" 
+                      [(ngModel)]="editedDates[assignment.assignmentsId!].start"
+                      class="date-input"
+                      placeholder="Start Date">
+                    <span class="date-separator">→</span>
+                    <input 
+                      type="date" 
+                      [(ngModel)]="editedDates[assignment.assignmentsId!].end"
+                      class="date-input"
+                      placeholder="End Date">
+                  </div>
+                  <div class="edit-actions">
+                    <button 
+                      (click)="saveAssignmentDates(assignment)" 
+                      class="btn-save" 
+                      title="Save"
+                      [disabled]="isSaving(assignment.assignmentsId)">
+                      <span *ngIf="!isSaving(assignment.assignmentsId)">✓ Save</span>
+                      <span *ngIf="isSaving(assignment.assignmentsId)">Saving...</span>
+                    </button>
+                    <button 
+                      (click)="cancelEdit()" 
+                      class="btn-cancel" 
+                      title="Cancel"
+                      [disabled]="isSaving(assignment.assignmentsId)">
+                      ✗ Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             <span class="no-developers" *ngIf="!project.assignments || project.assignments.length === 0">
