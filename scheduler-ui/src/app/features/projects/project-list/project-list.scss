@@ -289,31 +289,6 @@
   }
 }
 
-.col-developers {
-  min-width: 250px;
-  
-  .developers-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
-  
-  .developer-badge {
-    background: #e3f2fd;
-    color: #1976d2;
-    padding: 0.25rem 0.6rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  
-  .no-developers {
-    color: #999;
-    font-style: italic;
-    font-size: 0.85rem;
-  }
-}
 
 // Responsive adjustments
 @media (max-width: 1400px) {
@@ -347,5 +322,64 @@
   &:hover .sort-icon {
     opacity: 1;
     color: #4CAF50;
+  }
+}
+
+.col-developers {
+  min-width: 350px;
+  max-width: 450px;
+  
+  .developers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .developer-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border-left: 3px solid #1976d2;
+    transition: background-color 0.2s;
+    
+    &:hover {
+      background: #f0f7ff;
+    }
+  }
+  
+  .developer-name {
+    font-weight: 600;
+    color: #1976d2;
+    font-size: 0.875rem;
+  }
+  
+  .developer-dates {
+    font-size: 0.75rem;
+    color: #666;
+    
+    .date-range {
+      display: flex;
+      gap: 0.35rem;
+      align-items: center;
+    }
+    
+    .date-separator {
+      color: #999;
+      font-weight: bold;
+    }
+    
+    &.no-dates {
+      color: #999;
+      font-style: italic;
+    }
+  }
+  
+  .no-developers {
+    color: #999;
+    font-style: italic;
+    font-size: 0.85rem;
   }
 }

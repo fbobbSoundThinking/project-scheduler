@@ -153,9 +153,21 @@
           
           <td class="col-developers">
             <div class="developers-list" *ngIf="project.assignments && project.assignments.length > 0">
-              <span class="developer-badge" *ngFor="let assignment of project.assignments">
-                {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
-              </span>
+              <div class="developer-item" *ngFor="let assignment of project.assignments">
+                <span class="developer-name">
+                  {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
+                </span>
+                <span class="developer-dates" *ngIf="assignment.startDate || assignment.endDate">
+                  <span class="date-range">
+                    {{assignment.startDate ? (assignment.startDate | date:'MMM d, y') : 'No start'}}
+                    <span class="date-separator">→</span>
+                    {{assignment.endDate ? (assignment.endDate | date:'MMM d, y') : 'No end'}}
+                  </span>
+                </span>
+                <span class="developer-dates no-dates" *ngIf="!assignment.startDate && !assignment.endDate">
+                  (No dates set)
+                </span>
+              </div>
             </div>
             <span class="no-developers" *ngIf="!project.assignments || project.assignments.length === 0">
               No developers assigned
