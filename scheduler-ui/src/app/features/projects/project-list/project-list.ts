@@ -219,11 +219,14 @@ export class ProjectList implements OnInit {
     const edited = this.editedDates[assignment.assignmentsId];
     this.savingAssignmentId = assignment.assignmentsId;
     
-    // Create updated assignment object
-    const updatedAssignment: Assignment = {
-      ...assignment,
-      startDate: edited.start || undefined,
-      endDate: edited.end || undefined
+    // Create updated assignment object with only necessary fields
+    const updatedAssignment: any = {
+      assignmentsId: assignment.assignmentsId,
+      startDate: edited.start || null,
+      endDate: edited.end || null,
+      ratio: assignment.ratio,
+      project: assignment.project ? { projectsId: assignment.project.projectsId } : null,
+      developer: assignment.developer ? { developersId: assignment.developer.developersId } : null
     };
     
     this.assignmentService.updateAssignment(
