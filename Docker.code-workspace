@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../Docker"
+		},
+		{
+			"name": "schedule-modeler",
+			"path": "schedule-modeler"
+		}
+	],
+	"settings": {}
+}
