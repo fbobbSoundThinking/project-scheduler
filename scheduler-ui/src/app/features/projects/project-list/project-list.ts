@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +36,8 @@ export class ProjectList implements OnInit {
 
   constructor(
     private projectService: ProjectService,
-    private assignmentService: AssignmentService
+    private assignmentService: AssignmentService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -238,16 +239,25 @@ export class ProjectList implements OnInit {
         assignment.startDate = result.startDate;
         assignment.endDate = result.endDate;
         
+        // Clear editing state
         this.editingAssignmentId = null;
         this.savingAssignmentId = null;
         delete this.editedDates[assignment.assignmentsId!];
         
-        console.log('Assignment dates updated successfully');
+        // Trigger change detection to update UI
+        this.cdr.detectChanges();
+        
+        console.log('Assignment dates updated successfully', result);
       },
       error: (err) => {
         console.error('Error updating assignment dates:', err);
         this.savingAssignmentId = null;
+        this.cdr.detectChanges();
         alert('Error updating assignment dates. Please try again.');
+      },
+      complete: () => {
+        // Ensure state is cleared on completion
+        console.log('Update complete');
       }
     });
   }
