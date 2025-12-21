@@ -9,12 +9,12 @@
   
   h1 {
     font-size: 2.5rem;
-    color: #1a1a1a;
+    color: #000000;
     margin: 0 0 0.5rem 0;
   }
   
   .subtitle {
-    color: #666;
+    color: #474747;
     font-size: 1.1rem;
     margin: 0;
   }
@@ -69,10 +69,10 @@
   gap: 1.5rem;
   
   .stat-item {
-    color: #666;
+    color: #474747;
     
     strong {
-      color: #1a1a1a;
+      color: #000000;
       font-size: 1.2rem;
     }
   }
@@ -101,7 +101,7 @@
 .no-results {
   text-align: center;
   padding: 4rem;
-  color: #666;
+  color: #474747;
   font-size: 1.2rem;
 }
 
@@ -125,7 +125,7 @@
       padding: 1rem;
       text-align: left;
       font-weight: 600;
-      color: #333;
+      color: #232323;
       white-space: nowrap;
     }
   }
@@ -157,7 +157,7 @@
   
   .project-name {
     font-weight: 500;
-    color: #1a1a1a;
+    color: #000000;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -204,7 +204,7 @@
   min-width: 100px;
   
   .level-value {
-    color: #666;
+    color: #474747;
   }
 }
 
@@ -212,7 +212,7 @@
   min-width: 120px;
   
   .date-value {
-    color: #666;
+    color: #474747;
   }
 }
 
@@ -221,7 +221,7 @@
   
   .team-name {
     font-weight: 600;
-    color: #1a1a1a;
+    color: #000000;
     background: #f0f0f0;
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
@@ -248,34 +248,34 @@
 .priority-badge {
   &.priority-high {
     background: #ffebee;
-    color: #c62828;
+    color: #8a1c1c;
   }
   
   &.priority-medium {
     background: #fff3e0;
-    color: #ef6c00;
+    color: #a74b00;
   }
   
   &.priority-low {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #205623;
   }
 }
 
 .urgency-badge {
   &.urgency-high {
     background: #ffebee;
-    color: #c62828;
+    color: #8a1c1c;
   }
   
   &.urgency-medium {
     background: #fff3e0;
-    color: #ef6c00;
+    color: #a74b00;
   }
   
   &.urgency-low {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #205623;
   }
 }
 
@@ -285,7 +285,7 @@
   
   .hours-value {
     font-weight: 500;
-    color: #1a1a1a;
+    color: #000000;
   }
 }
 
@@ -314,7 +314,7 @@
   
   .sort-icon {
     margin-left: 0.5rem;
-    color: #999;
+    color: #6b6b6b;
     font-size: 0.9rem;
     opacity: 0.7;
   }
@@ -352,19 +352,19 @@
   
   .developer-name {
     font-weight: 600;
-    color: #1976d2;
+    color: #114d92;
     font-size: 0.875rem;
     
     .position-badge {
       font-weight: 600;
-      color: #666;
+      color: #474747;
       font-size: 0.875rem;
       margin-left: 0.25rem;
     }
     
     .ratio-badge {
       font-weight: 600;
-      color: #2e7d32;
+      color: #205623;
       font-size: 0.875rem;
       margin-left: 0.25rem;
       background: #e8f5e9;
@@ -375,7 +375,7 @@
   
   .developer-dates {
     font-size: 0.75rem;
-    color: #666;
+    color: #474747;
     
     .date-range {
       display: flex;
@@ -384,18 +384,18 @@
     }
     
     .date-separator {
-      color: #999;
+      color: #6b6b6b;
       font-weight: bold;
     }
     
     &.no-dates {
-      color: #999;
+      color: #6b6b6b;
       font-style: italic;
     }
   }
   
   .no-developers {
-    color: #999;
+    color: #6b6b6b;
     font-style: italic;
     font-size: 0.85rem;
   }
@@ -452,7 +452,7 @@
     label {
       font-size: 0.75rem;
       font-weight: 600;
-      color: #666;
+      color: #474747;
     }
     
     .ratio-select {
@@ -486,7 +486,7 @@
   }
   
   .date-separator {
-    color: #1976d2;
+    color: #114d92;
     font-weight: bold;
   }
   
