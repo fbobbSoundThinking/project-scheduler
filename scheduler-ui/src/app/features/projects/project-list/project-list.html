@@ -156,6 +156,7 @@
               <div class="developer-item" *ngFor="let assignment of project.assignments">
                 <span class="developer-name">
                   {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
+                  <span class="position-badge">[{{getDeveloperPositionShort(assignment.developer?.position)}}]</span>
                 </span>
                 
                 <!-- View Mode -->

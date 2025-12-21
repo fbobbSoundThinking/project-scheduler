@@ -204,6 +204,13 @@ export class ProjectList implements OnInit {
     return this.savingAssignmentId === assignmentId;
   }
 
+  getDeveloperPositionShort(position?: string): string {
+    if (!position) return '';
+    if (position.toLowerCase().includes('technical lead')) return 'LEAD';
+    if (position.toLowerCase().includes('developer')) return 'DEV';
+    return position.toUpperCase();
+  }
+
   startEditingDates(assignment: Assignment): void {
     if (!assignment.assignmentsId) return;
     
