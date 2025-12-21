@@ -361,6 +361,16 @@
       font-size: 0.7rem;
       margin-left: 0.25rem;
     }
+    
+    .ratio-badge {
+      font-weight: 600;
+      color: #2e7d32;
+      font-size: 0.7rem;
+      margin-left: 0.25rem;
+      background: #e8f5e9;
+      padding: 0.15rem 0.35rem;
+      border-radius: 8px;
+    }
   }
   
   .developer-dates {
@@ -432,6 +442,33 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+  }
+  
+  .ratio-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #666;
+    }
+    
+    .ratio-select {
+      padding: 0.4rem;
+      border: 2px solid #2e7d32;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      background: white;
+      cursor: pointer;
+      
+      &:focus {
+        outline: none;
+        border-color: #1b5e20;
+        background: #f1f8e9;
+      }
+    }
   }
   
   .date-input {

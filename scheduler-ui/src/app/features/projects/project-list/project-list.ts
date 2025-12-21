@@ -23,7 +23,7 @@ export class ProjectList implements OnInit {
   
   // Edit state
   editingAssignmentId: number | null = null;
-  editedDates: { [key: number]: { start: string, end: string } } = {};
+  editedDates: { [key: number]: { start: string, end: string, ratio: number } } = {};
   savingAssignmentId: number | null = null;
 
   statuses = [
@@ -214,13 +214,19 @@ export class ProjectList implements OnInit {
     return position.toUpperCase();
   }
 
+  getRatioPercentage(ratio?: number): number {
+    if (ratio === null || ratio === undefined) return 0;
+    return Math.round(ratio * 100);
+  }
+
   startEditingDates(assignment: Assignment): void {
     if (!assignment.assignmentsId) return;
     
     this.editingAssignmentId = assignment.assignmentsId;
     this.editedDates[assignment.assignmentsId] = {
       start: assignment.startDate || '',
-      end: assignment.endDate || ''
+      end: assignment.endDate || '',
+      ratio: assignment.ratio || 1.0
     };
   }
 
@@ -235,7 +241,7 @@ export class ProjectList implements OnInit {
       assignmentsId: assignment.assignmentsId,
       startDate: edited.start || null,
       endDate: edited.end || null,
-      ratio: assignment.ratio,
+      ratio: edited.ratio,
       project: assignment.project ? { projectsId: assignment.project.projectsId } : null,
       developer: assignment.developer ? { developersId: assignment.developer.developersId } : null
     };
@@ -248,6 +254,7 @@ export class ProjectList implements OnInit {
         // Update the assignment in the local data
         assignment.startDate = result.startDate;
         assignment.endDate = result.endDate;
+        assignment.ratio = result.ratio;
         
         // Clear editing state
         this.editingAssignmentId = null;
