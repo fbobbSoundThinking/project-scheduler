@@ -51,10 +51,12 @@ export class ProjectList implements OnInit {
         this.projects = data;
         this.filterProjects();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading projects:', error);
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -66,6 +68,7 @@ export class ProjectList implements OnInit {
         project.projectName?.toLowerCase().includes(this.searchKeyword.toLowerCase());
       return matchesStatus && matchesSearch;
     });
+    this.cdr.detectChanges();
   }
 
   onStatusChange(): void {
