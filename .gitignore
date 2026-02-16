@@ -1,6 +1,6 @@
 # Sensitive configuration files
-monday.txt
-tp-database.txt
+resources/monday.txt
+resources/tp-database.txt
 
 # Python
 __pycache__/
@@ -16,17 +16,17 @@ venv/
 node_modules/
 
 # Angular build
-scheduler-ui/dist/
-scheduler-ui/.angular/
-scheduler-ui/.vscode/
+src/scheduler-ui/dist/
+src/scheduler-ui/.angular/
+src/scheduler-ui/.vscode/
 
 # Spring Boot
-scheduler-api/target/
-scheduler-api/.mvn/
-scheduler-api/mvnw
-scheduler-api/mvnw.cmd
-scheduler-api/.idea/
-scheduler-api/*.iml
+src/scheduler-api/target/
+src/scheduler-api/.mvn/
+src/scheduler-api/mvnw
+src/scheduler-api/mvnw.cmd
+src/scheduler-api/.idea/
+src/scheduler-api/*.iml
 
 # MacOS
 .DS_Store

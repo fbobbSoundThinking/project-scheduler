@@ -1,0 +1,527 @@
+<div class="project-list-page">
+  <div class="fixed-width-content">
+    <header class="page-header">
+      <div class="header-content">
+        <div class="header-text">
+          <h1>Project Scheduler</h1>
+          <p class="subtitle">Manage and track development projects</p>
+        </div>
+        <div class="header-buttons">
+          <a routerLink="/gantt" class="btn-gantt-view">📊 Timeline View</a>
+          <a routerLink="/workload" class="btn-workload-view">🔥 Workload Heatmap</a>
+          <button 
+            class="btn-sync-monday"
+            (click)="syncFromMonday()"
+            [disabled]="syncing"
+            title="Update projects from Monday.com">
+            <span *ngIf="!syncing">🔄 Update from Monday.com</span>
+            <span *ngIf="syncing">⏳ Syncing...</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchKeyword"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search projects..."
+        class="search-input"
+      />
+    </div>
+
+    <div class="filter-box">
+      <div class="group-filter-container">
+        <label class="filter-label">Group Filter:</label>
+        <div class="group-chips">
+          <button 
+            *ngFor="let group of groups" 
+            class="group-chip"
+            [class.selected]="isGroupSelected(group.value)"
+            (click)="toggleGroup(group.value)">
+            {{group.label}}
+          </button>
+        </div>
+        <div class="filter-actions">
+          <button class="filter-action-btn" (click)="selectAllGroups()">Select All</button>
+          <button class="filter-action-btn" (click)="clearAllGroups()">Clear All</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="advanced-filter-box">
+      <button class="btn-advanced-filter" (click)="openAdvancedFilter()">
+        <span class="filter-icon">⚡</span>
+        Advanced Filter
+        <span class="filter-count" *ngIf="activeAdvancedFilterCount > 0">{{activeAdvancedFilterCount}}</span>
+      </button>
+    </div>
+
+    <div class="stats">
+      <span class="stat-item">
+        Total: <strong>{{projects.length}}</strong>
+      </span>
+      <span class="stat-item">
+        Filtered: <strong>{{filteredProjects.length}}</strong>
+      </span>
+      <span class="stat-item">
+        Groups Selected: <strong>{{selectedGroups.size}}</strong>
+      </span>
+    </div>
+  </div>
+  </div> <!-- end fixed-width-content -->
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading projects...</p>
+  </div>
+
+  <div *ngIf="!loading && filteredProjects.length === 0" class="no-results">
+    <p>No projects found.</p>
+  </div>
+
+  <div *ngIf="!loading && filteredProjects.length > 0" class="table-scroll-container">
+    <div class="table-wrapper">
+      <table class="projects-table">
+      <thead>
+        <tr>
+          <th class="col-expand"></th>
+          <th class="col-project sortable" (click)="sortBy('projectName')">
+            Project Name <span class="sort-icon">{{getSortIcon('projectName')}}</span>
+          </th>
+          <th class="col-group sortable" (click)="sortBy('group')">
+            Group <span class="sort-icon">{{getSortIcon('group')}}</span>
+          </th>
+          <th class="col-status sortable" (click)="sortBy('status')">
+            Status <span class="sort-icon">{{getSortIcon('status')}}</span>
+          </th>
+          <th class="col-level sortable" (click)="sortBy('level')">
+            Level <span class="sort-icon">{{getSortIcon('level')}}</span>
+          </th>
+          <th class="col-date sortable" (click)="sortBy('startDate')">
+            Start Date <span class="sort-icon">{{getSortIcon('startDate')}}</span>
+          </th>
+          <th class="col-date sortable" (click)="sortBy('qaReadyDate')">
+            QA Ready Date <span class="sort-icon">{{getSortIcon('qaReadyDate')}}</span>
+          </th>
+          <th class="col-date sortable" (click)="sortBy('targetProdDate')">
+            Target Prod Date <span class="sort-icon">{{getSortIcon('targetProdDate')}}</span>
+          </th>
+          <th class="col-team sortable" (click)="sortBy('primaryTeam')">
+            Primary Team <span class="sort-icon">{{getSortIcon('primaryTeam')}}</span>
+          </th>
+          <th class="col-developers sortable" (click)="sortBy('developers')">
+            Assigned Developers <span class="sort-icon">{{getSortIcon('developers')}}</span>
+          </th>
+          <th class="col-priority sortable" (click)="sortBy('priority')">
+            Priority <span class="sort-icon">{{getSortIcon('priority')}}</span>
+          </th>
+          <th class="col-urgency sortable" (click)="sortBy('urgency')">
+            Urgency <span class="sort-icon">{{getSortIcon('urgency')}}</span>
+          </th>
+          <th class="col-hours sortable" (click)="sortBy('devHours')">
+            Dev Hours <span class="sort-icon">{{getSortIcon('devHours')}}</span>
+          </th>
+          <th class="col-hours sortable" (click)="sortBy('wfHours')">
+            WF Hours <span class="sort-icon">{{getSortIcon('wfHours')}}</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let project of filteredProjects">
+        <tr 
+          class="project-row"
+        >
+          <td class="col-expand">
+            <button 
+              *ngIf="hasSubitems(project)"
+              class="btn-expand"
+              (click)="toggleProjectExpansion(project.projectsId!)"
+              [title]="isProjectExpanded(project.projectsId!) ? 'Collapse subitems' : 'Expand subitems'">
+              <span *ngIf="!isProjectExpanded(project.projectsId!)">▶</span>
+              <span *ngIf="isProjectExpanded(project.projectsId!)">▼</span>
+            </button>
+          </td>
+          <td class="col-project">
+            <div class="project-name" [title]="project.projectName">
+              {{project.projectName}}
+            </div>
+          </td>
+          
+          <td class="col-group">
+            <span class="group-badge" [ngClass]="getGroupClass(project.group)">
+              {{project.group || '-'}}
+            </span>
+          </td>
+          
+          <td class="col-status">
+            <span class="status-badge" [ngClass]="getStatusClass(project.status)">
+              {{project.status || '-'}}
+            </span>
+          </td>
+          
+          <td class="col-level">
+            <span class="level-value">{{project.level || '-'}}</span>
+          </td>
+          
+          <td class="col-date">
+            <span class="date-value">
+              {{project.startDate ? (project.startDate | date:'MMM d, y') : '-'}}
+            </span>
+          </td>
+          
+          <td class="col-date">
+            <span class="date-value">
+              {{project.qaReadyDate ? (project.qaReadyDate | date:'MMM d, y') : '-'}}
+            </span>
+          </td>
+          
+          <td class="col-date">
+            <span class="date-value">
+              {{project.targetProdDate ? (project.targetProdDate | date:'MMM d, y') : '-'}}
+            </span>
+          </td>
+          
+          <td class="col-team">
+            <span class="team-name" [ngClass]="getTeamClass(project.primaryTeamId)" [ngStyle]="getTeamStyle(project.primaryTeamId)">
+              {{getTeamName(project.primaryTeamId)}}
+            </span>
+          </td>
+          
+          <td class="col-developers">
+            <div class="developers-list" *ngIf="project.assignments && project.assignments.length > 0">
+              <div class="developer-item" *ngFor="let assignment of project.assignments">
+                <div class="developer-header">
+                  <span class="developer-name">
+                    {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
+                    <span class="position-badge">[{{getDeveloperPositionShort(assignment.developer?.position)}}]</span>
+                    <span class="ratio-badge">{{getRatioPercentage(assignment.ratio)}}%</span>
+                  </span>
+                  <button 
+                    class="btn-delete-developer" 
+                    (click)="confirmDeleteAssignment(assignment.assignmentsId!, assignment.developer?.firstName + ' ' + assignment.developer?.lastName)"
+                    [disabled]="isDeleting(assignment.assignmentsId)"
+                    title="Remove developer from project">
+                    <span *ngIf="!isDeleting(assignment.assignmentsId)">🗑️</span>
+                    <span *ngIf="isDeleting(assignment.assignmentsId)">⏳</span>
+                  </button>
+                </div>
+                
+                <!-- View Mode -->
+                <div *ngIf="!isEditing(assignment.assignmentsId)" class="developer-dates view-mode">
+                  <span class="date-range" (click)="startEditingDates(assignment)">
+                    <span *ngIf="assignment.startDate || assignment.endDate">
+                      {{assignment.startDate ? (assignment.startDate | date:'MMM d, y') : 'No start'}}
+                      <span class="date-separator">→</span>
+                      {{assignment.endDate ? (assignment.endDate | date:'MMM d, y') : 'No end'}}
+                    </span>
+                    <span *ngIf="!assignment.startDate && !assignment.endDate" class="no-dates">
+                      (No dates set)
+                    </span>
+                    <span class="edit-icon">✏️</span>
+                  </span>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div *ngIf="isEditing(assignment.assignmentsId)" class="developer-dates edit-mode">
+                  <div class="date-inputs">
+                    <input 
+                      type="date" 
+                      [(ngModel)]="editedDates[assignment.assignmentsId!].start"
+                      class="date-input"
+                      placeholder="Start Date">
+                    <span class="date-separator">→</span>
+                    <input 
+                      type="date" 
+                      [(ngModel)]="editedDates[assignment.assignmentsId!].end"
+                      class="date-input"
+                      placeholder="End Date">
+                  </div>
+                  <div class="ratio-input">
+                    <label>Ratio:</label>
+                    <select 
+                      [(ngModel)]="editedDates[assignment.assignmentsId!].ratio"
+                      class="ratio-select">
+                      <option value="1.0">100%</option>
+                      <option value="0.9">90%</option>
+                      <option value="0.8">80%</option>
+                      <option value="0.7">70%</option>
+                      <option value="0.6">60%</option>
+                      <option value="0.5">50%</option>
+                      <option value="0.4">40%</option>
+                      <option value="0.3">30%</option>
+                      <option value="0.2">20%</option>
+                      <option value="0.1">10%</option>
+                    </select>
+                  </div>
+                  <div class="edit-actions">
+                    <button 
+                      (click)="saveAssignmentDates(assignment)" 
+                      class="btn-save" 
+                      title="Save"
+                      [disabled]="isSaving(assignment.assignmentsId)">
+                      <span *ngIf="!isSaving(assignment.assignmentsId)">✓ Save</span>
+                      <span *ngIf="isSaving(assignment.assignmentsId)">Saving...</span>
+                    </button>
+                    <button 
+                      (click)="cancelEdit()" 
+                      class="btn-cancel" 
+                      title="Cancel"
+                      [disabled]="isSaving(assignment.assignmentsId)">
+                      ✗ Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="add-developer-section" *ngIf="!isAddingDeveloper(project.projectsId)">
+              <button 
+                class="btn-add-developer" 
+                (click)="startAddingDeveloper(project.projectsId!)"
+                title="Add developer to project">
+                Add Developer
+              </button>
+            </div>
+            <div class="add-developer-form" *ngIf="isAddingDeveloper(project.projectsId)">
+              <select [(ngModel)]="newDeveloperSelection[project.projectsId!]" class="developer-select">
+                <option value="">-- Select Developer --</option>
+                <option *ngFor="let dev of availableDevelopers" [value]="dev.developersId">
+                  {{dev.firstName}} {{dev.lastName}} ({{dev.position}})
+                </option>
+              </select>
+              <select [(ngModel)]="newDeveloperRatio[project.projectsId!]" class="ratio-select-small">
+                <option value="1.0">100%</option>
+                <option value="0.9">90%</option>
+                <option value="0.8">80%</option>
+                <option value="0.7">70%</option>
+                <option value="0.6">60%</option>
+                <option value="0.5" selected>50%</option>
+                <option value="0.4">40%</option>
+                <option value="0.3">30%</option>
+                <option value="0.2">20%</option>
+                <option value="0.1">10%</option>
+              </select>
+              <button class="btn-confirm-add" (click)="confirmAddDeveloper(project.projectsId!)">✓</button>
+              <button class="btn-cancel-add" (click)="cancelAddDeveloper(project.projectsId!)">✗</button>
+            </div>
+            <span class="no-developers" *ngIf="!project.assignments || project.assignments.length === 0">
+              No developers assigned
+            </span>
+          </td>
+          
+          <td class="col-priority">
+            <span class="priority-badge" [ngClass]="getPriorityClass(project.priority)">
+              {{project.priority !== null && project.priority !== undefined ? project.priority : '-'}}
+            </span>
+          </td>
+          
+          <td class="col-urgency">
+            <span class="urgency-badge" [ngClass]="getUrgencyClass(project.urgency)">
+              {{project.urgency !== null && project.urgency !== undefined ? project.urgency : '-'}}
+            </span>
+          </td>
+          
+          <td class="col-hours">
+            <span class="hours-value">{{project.devHours || 0}}</span>
+          </td>
+          
+          <td class="col-hours">
+            <span class="hours-value">{{project.wfHours || 0}}</span>
+          </td>
+        </tr>
+        
+        <!-- SUBITEM ROWS (nested under expanded project) -->
+        <tr 
+          *ngFor="let subitem of project.subitems" 
+          [class.d-none]="!isProjectExpanded(project.projectsId!) || !hasSubitems(project)"
+          class="subitem-row"
+        >
+            <td class="col-expand"></td>
+            
+            <td class="col-project subitem-name">
+              <div class="subitem-name-content" [title]="subitem.subitemName">
+                <span class="subitem-icon">↳</span>
+                {{subitem.subitemName}}
+              </div>
+            </td>
+            
+            <td class="col-group">
+              <span class="group-badge" [ngClass]="getGroupClass(subitem.group)">
+                {{subitem.group || '-'}}
+              </span>
+            </td>
+            
+            <td class="col-status">
+              <span class="status-badge" [ngClass]="getStatusClass(subitem.status)">
+                {{subitem.status || '-'}}
+              </span>
+            </td>
+            
+            <td class="col-level">-</td>
+            <td class="col-date">{{subitem.devStartDate ? (subitem.devStartDate | date:'M/d/yy') : '-'}}</td>
+            <td class="col-date">{{subitem.qaEndDate ? (subitem.qaEndDate | date:'M/d/yy') : '-'}}</td>
+            <td class="col-date">{{subitem.targetDeploymentDate ? (subitem.targetDeploymentDate | date:'M/d/yy') : '-'}}</td>
+            <td class="col-team">-</td>
+            
+            <td class="col-developers">
+              <div class="developers-list" *ngIf="getSubitemAssignments(subitem).length > 0">
+                <div class="developer-item" *ngFor="let assignment of getSubitemAssignments(subitem)">
+                  <div class="developer-header">
+                    <span class="developer-name">
+                      {{assignment.developer?.firstName}} {{assignment.developer?.lastName}}
+                      <span class="position-badge">[{{getDeveloperPositionShort(assignment.developer?.position)}}]</span>
+                      <span class="ratio-badge">{{getRatioPercentage(assignment.ratio)}}%</span>
+                    </span>
+                    <button 
+                      class="btn-delete-developer" 
+                      (click)="confirmDeleteAssignment(assignment.assignmentsId!, assignment.developer?.firstName + ' ' + assignment.developer?.lastName)"
+                      [disabled]="isDeleting(assignment.assignmentsId)"
+                      title="Remove developer from subitem">
+                      <span *ngIf="!isDeleting(assignment.assignmentsId)">🗑️</span>
+                      <span *ngIf="isDeleting(assignment.assignmentsId)">⏳</span>
+                    </button>
+                  </div>
+                  
+                  <div *ngIf="!isEditing(assignment.assignmentsId)" class="developer-dates view-mode">
+                    <span class="date-range" (click)="startEditingDates(assignment)">
+                      <span *ngIf="assignment.startDate || assignment.endDate">
+                        {{assignment.startDate ? (assignment.startDate | date:'MMM d, y') : 'No start'}}
+                        <span class="date-separator">→</span>
+                        {{assignment.endDate ? (assignment.endDate | date:'MMM d, y') : 'No end'}}
+                      </span>
+                      <span *ngIf="!assignment.startDate && !assignment.endDate" class="no-dates">
+                        (No dates set)
+                      </span>
+                      <span class="edit-icon">✏️</span>
+                    </span>
+                  </div>
+                  
+                  <div *ngIf="isEditing(assignment.assignmentsId)" class="developer-dates edit-mode">
+                    <div class="date-inputs">
+                      <input 
+                        type="date" 
+                        [(ngModel)]="editedDates[assignment.assignmentsId!].start"
+                        class="date-input"
+                        placeholder="Start Date">
+                      <span class="date-separator">→</span>
+                      <input 
+                        type="date" 
+                        [(ngModel)]="editedDates[assignment.assignmentsId!].end"
+                        class="date-input"
+                        placeholder="End Date">
+                    </div>
+                    <div class="ratio-input">
+                      <label>Ratio:</label>
+                      <select 
+                        [(ngModel)]="editedDates[assignment.assignmentsId!].ratio"
+                        class="ratio-select">
+                        <option value="1.0">100%</option>
+                        <option value="0.9">90%</option>
+                        <option value="0.8">80%</option>
+                        <option value="0.7">70%</option>
+                        <option value="0.6">60%</option>
+                        <option value="0.5">50%</option>
+                        <option value="0.4">40%</option>
+                        <option value="0.3">30%</option>
+                        <option value="0.2">20%</option>
+                        <option value="0.1">10%</option>
+                      </select>
+                    </div>
+                    <div class="edit-actions">
+                      <button 
+                        (click)="saveAssignmentDates(assignment)" 
+                        class="btn-save"
+                        [disabled]="savingAssignmentId === assignment.assignmentsId"
+                        title="Save changes">
+                        <span *ngIf="savingAssignmentId !== assignment.assignmentsId">💾 Save</span>
+                        <span *ngIf="savingAssignmentId === assignment.assignmentsId">⏳ Saving...</span>
+                      </button>
+                      <button 
+                        (click)="cancelEdit()" 
+                        class="btn-cancel"
+                        [disabled]="savingAssignmentId === assignment.assignmentsId"
+                        title="Cancel editing">
+                        ✖️ Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="add-developer-section" *ngIf="getSubitemAssignments(subitem).length > 0 && !isAddingDeveloperToSubitem(subitem.subitemsId)">
+                <button 
+                  class="btn-add-developer" 
+                  (click)="startAddingDeveloperToSubitem(subitem.subitemsId!)"
+                  title="Add developer to subitem">
+                  Add Developer
+                </button>
+              </div>
+              
+              <div class="add-developer-form" *ngIf="isAddingDeveloperToSubitem(subitem.subitemsId)">
+                <select [(ngModel)]="newSubitemDeveloperSelection[subitem.subitemsId!]" class="developer-select">
+                  <option value="">-- Select Developer ({{availableDevelopers.length}} available) --</option>
+                  <option *ngFor="let dev of availableDevelopers" [value]="dev.developersId">
+                    {{dev.firstName}} {{dev.lastName}} ({{dev.position}})
+                  </option>
+                </select>
+                <select [(ngModel)]="newSubitemDeveloperRatio[subitem.subitemsId!]" class="ratio-select-small">
+                  <option value="1.0">100%</option>
+                  <option value="0.9">90%</option>
+                  <option value="0.8">80%</option>
+                  <option value="0.7">70%</option>
+                  <option value="0.6">60%</option>
+                  <option value="0.5" selected>50%</option>
+                  <option value="0.4">40%</option>
+                  <option value="0.3">30%</option>
+                  <option value="0.2">20%</option>
+                  <option value="0.1">10%</option>
+                </select>
+                <button 
+                  class="btn-confirm-add" 
+                  (click)="confirmAddDeveloperToSubitem(subitem.subitemsId!)"
+                  [disabled]="!newSubitemDeveloperSelection[subitem.subitemsId!] || addingDeveloperToSubitem[subitem.subitemsId!]"
+                  title="Confirm add developer">
+                  <span *ngIf="!addingDeveloperToSubitem[subitem.subitemsId!]">✓</span>
+                  <span *ngIf="addingDeveloperToSubitem[subitem.subitemsId!]">⏳</span>
+                </button>
+                <button 
+                  class="btn-cancel-add" 
+                  (click)="cancelAddDeveloperToSubitem(subitem.subitemsId!)"
+                  [disabled]="addingDeveloperToSubitem[subitem.subitemsId!]"
+                  title="Cancel">
+                  ✖️
+                </button>
+              </div>
+              
+              <span class="no-developers" *ngIf="getSubitemAssignments(subitem).length === 0">
+                No developers assigned
+                <button 
+                  class="btn-add-developer-inline" 
+                  (click)="startAddingDeveloperToSubitem(subitem.subitemsId!)"
+                  title="Add developer to subitem">
+                  + Add Developer
+                </button>
+              </span>
+            </td>
+            
+            <td class="col-priority">-</td>
+            <td class="col-urgency">-</td>
+            <td class="col-hours">-</td>
+            <td class="col-hours">-</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+    </div> <!-- end table-wrapper -->
+  </div> <!-- end table-scroll-container -->
+  
+  <!-- Advanced Filter Modal -->
+  <app-advanced-filter
+    [isOpen]="showAdvancedFilter"
+    [columns]="filterColumns"
+    (isOpenChange)="showAdvancedFilter = $event"
+    (applyFilters)="onApplyAdvancedFilters($event)">
+  </app-advanced-filter>
+</div> <!-- end project-list-page -->

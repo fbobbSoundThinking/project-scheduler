@@ -1,0 +1,117 @@
+<div class="advanced-filter-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="advanced-filter-modal" (click)="$event.stopPropagation()">
+    <div class="filter-header">
+      <h3>Advanced Filters</h3>
+      <div class="header-actions">
+        <button class="btn-text" (click)="clearAll()">Clear all</button>
+        <button class="btn-close" (click)="close()">×</button>
+      </div>
+    </div>
+    
+    <div class="filter-body">
+      <div class="filter-info" *ngIf="activeFilterCount > 0">
+        Showing items matching {{activeFilterCount}} filter{{activeFilterCount > 1 ? 's' : ''}}
+      </div>
+      
+      <div class="filter-groups">
+        <ng-container *ngFor="let group of filterGroups; let groupIndex = index">
+          <div class="filter-group">
+            <!-- Group Operator -->
+            <div class="group-operator" *ngIf="groupIndex > 0">
+              <select [(ngModel)]="group.operator" class="operator-select">
+                <option value="AND">And</option>
+                <option value="OR">Or</option>
+              </select>
+            </div>
+            
+            <!-- Filter Rules -->
+            <div class="filter-rules">
+              <ng-container *ngFor="let rule of group.rules; let ruleIndex = index">
+                <div class="filter-rule">
+                  <!-- Rule Operator (between rules in same group) -->
+                  <div class="rule-operator" *ngIf="ruleIndex > 0">
+                    <span class="operator-label">{{group.operator}}</span>
+                  </div>
+                  
+                  <div class="rule-content">
+                    <div class="rule-label" *ngIf="ruleIndex === 0">Where</div>
+                    
+                    <div class="rule-fields">
+                      <!-- Column Selection -->
+                      <select 
+                        [(ngModel)]="rule.column" 
+                        (ngModelChange)="onColumnChange(rule)"
+                        class="select-column">
+                        <option *ngFor="let col of columns" [value]="col.id">
+                          {{col.label}}
+                        </option>
+                      </select>
+                      
+                      <!-- Condition Selection -->
+                      <select 
+                        [(ngModel)]="rule.condition"
+                        (ngModelChange)="onConditionChange(rule)"
+                        class="select-condition">
+                        <option *ngFor="let cond of getConditionsForColumn(rule.column)" [value]="cond.value">
+                          {{cond.label}}
+                        </option>
+                      </select>
+                      
+                      <!-- Value Selection (for 'is' and 'is_not' with select columns) -->
+                      <div 
+                        class="value-selector" 
+                        *ngIf="requiresValue(rule.condition) && isSelectColumn(rule.column)">
+                        <div class="value-chips">
+                          <span 
+                            *ngFor="let value of getColumnOptions(rule.column)"
+                            class="value-chip"
+                            [class.selected]="isValueSelected(rule, value)"
+                            (click)="toggleValue(rule, value)">
+                            {{value}}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <!-- Text Input (for text conditions) -->
+                      <input 
+                        *ngIf="requiresValue(rule.condition) && !isSelectColumn(rule.column)"
+                        type="text"
+                        [(ngModel)]="rule.textValue"
+                        placeholder="Enter value..."
+                        class="input-text" />
+                      
+                      <!-- Remove Rule Button -->
+                      <button 
+                        class="btn-remove-rule" 
+                        (click)="removeFilterRule(group, rule.id)"
+                        title="Remove filter">
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+              
+              <!-- Add New Filter Button -->
+              <button class="btn-add-filter" (click)="addFilterRule(group)">
+                + New filter
+              </button>
+            </div>
+          </div>
+        </ng-container>
+        
+        <!-- Add New Group Button -->
+        <div class="add-group-section">
+          <button class="btn-add-group" (click)="addFilterGroup()">
+            + New group
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="filter-footer">
+      <button class="btn-cancel" (click)="close()">Cancel</button>
+      <button class="btn-apply" (click)="apply()">Apply</button>
+    </div>
+  </div>
+</div>

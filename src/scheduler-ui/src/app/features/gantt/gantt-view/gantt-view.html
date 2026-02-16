@@ -1,0 +1,127 @@
+<div class="gantt-container">
+  <header class="page-header">
+    <h1>📊 Project Timeline</h1>
+    <div class="header-actions">
+      <a routerLink="/workload" class="btn-workload">Workload Heatmap</a>
+      <a routerLink="/projects" class="btn-back">← Back to List</a>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="controls-header" (click)="toggleFilters()">
+      <h3>🔍 Search & Filters</h3>
+      <button class="toggle-btn">
+        {{ filtersExpanded ? '▼ Collapse' : '▶ Expand' }}
+      </button>
+    </div>
+
+    <div class="controls-body" [class.collapsed]="!filtersExpanded">
+
+      <div class="search-box">
+        <label class="filter-label">Project Name:</label>
+        <input 
+          type="text" 
+          [(ngModel)]="searchKeyword"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search projects..."
+          class="search-input"
+        />
+      </div>
+      <div class="sort-box">
+        <label class="filter-label">Sort by Project Name:</label>
+        <button class="sort-btn" (click)="toggleSort()">
+          {{sortDirection === 'asc' ? 'A → Z' : 'Z → A'}} <span class="sort-icon">{{getSortIcon()}}</span>
+        </button>
+      </div>
+      <div class="filter-box">
+        <div class="group-filter-container">
+          <label class="filter-label">Group Filter:</label>
+          <div class="group-chips">
+            <button 
+              *ngFor="let group of groups" 
+              class="group-chip"
+              [class.selected]="isGroupSelected(group.value)"
+              (click)="toggleGroup(group.value)">
+              {{group.label}}
+            </button>
+            <div class="filter-actions">
+              <button class="filter-action-btn" (click)="selectAllGroups()">Select All</button>
+              <button class="filter-action-btn" (click)="clearAllGroups()">Clear All</button>
+            </div>
+          </div>
+       </div>
+      </div>
+    </div>
+        <div class="stats">
+        <span class="stat-item">
+          Total Projects: <strong>{{projects.length}}</strong>
+        </span>
+        <span class="stat-item">
+          Displayed: <strong>{{projectGroups.length}}</strong>
+        </span>
+        <span class="stat-item">
+          Groups Selected: <strong>{{selectedGroups.size}}</strong>
+        </span>
+      </div>
+</div>
+
+  <div *ngIf="loading" class="loading">Loading timeline...</div>
+
+  <div *ngIf="!loading && ganttItems.length === 0" class="no-data">
+    <p>No project assignments with dates found.</p>
+    <p>Add dates to assignments to see them in the timeline.</p>
+    <p><strong>Loaded {{projects.length}} projects total</strong></p>
+  </div>
+
+  <div *ngIf="!loading && ganttItems.length > 0" class="gantt-chart" #ganttChart>
+    <!-- Timeline Header -->
+    <div class="gantt-header">
+      <div class="gantt-sidebar">
+        <div class="sidebar-title">Project Name</div>
+      </div>
+      <div class="gantt-timeline-header">
+        <div *ngFor="let month of months; let i = index" 
+             class="month-header" 
+             [style.flex]="month.days"
+             [style.background]="i % 2 === 0 ? '#f0f0f0' : '#f5f5f5'">
+          {{month.name}}<br>{{month.year}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Gantt Rows Grouped by Project -->
+    <div class="gantt-body">
+      <ng-container *ngFor="let group of projectGroups">
+        <!-- Single Project Row with All Assignment Bars Overlaid -->
+        <div class="gantt-row project-row" [style.min-height.px]="group.rowHeight">
+          <div class="gantt-sidebar">
+            <div class="project-name">{{group.projectName}}</div>
+          </div>
+          <div class="gantt-timeline">
+            <!-- All assignment bars for this project -->
+            <div *ngFor="let item of group.assignments; let i = index; trackBy: trackByFn" 
+                 class="gantt-bar" 
+                 [class.subitem-bar]="item.isSubitem"
+                 [style.left]="getItemPosition(item).left"
+                 [style.width]="getItemPosition(item).width"
+                 [style.top.px]="6 + (i * 30)"
+                 [style.background-color]="item.color"
+                 [title]="(item.isSubitem ? '↳ ' + item.subitemName + ' - ' : '') + item.developer + ' (' + formatDate(item.startDate) + ' to ' + formatDate(item.endDate) + ') - Ratio: ' + ((item.ratio || 0) * 100) + '%'">
+              <span class="bar-label">{{item.developerInitials}} {{(item.ratio || 0) * 100}}% ({{formatDate(item.startDate)}} - {{formatDate(item.endDate)}})</span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Today Marker -->
+    <div class="gantt-today-marker">
+      <div class="gantt-sidebar">" "
+      </div>
+      <div *ngIf="isTodayVisible()" class="today-marker" [style.left]="getTodayPosition()">
+        <div class="today-label">Today</div>
+      </div>
+    </div> 
+
+  </div>
+</div>

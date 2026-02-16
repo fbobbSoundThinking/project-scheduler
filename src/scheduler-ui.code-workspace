@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "scheduler-ui"
+		},
+		{
+			"name": "DatabaseProjectTp",
+			"path": "../mssql-tp-project/DatabaseProjectTp"
+		}
+	],
+	"settings": {}
+}

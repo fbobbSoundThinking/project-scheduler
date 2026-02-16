@@ -1,0 +1,440 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { ProjectService } from '../../../core/services/project.service';
+import { AssignmentService } from '../../../core/services/assignment.service';
+import { TeamService } from '../../../core/services/team.service';
+import { Project, Assignment } from '../../../core/models';
+
+@Component({
+  selector: 'app-project-list',
+  imports: [CommonModule, RouterModule, FormsModule],
+  templateUrl: './project-list.html',
+  styleUrl: './project-list.scss',
+})
+export class ProjectList implements OnInit {
+  projects: Project[] = [];
+  filteredProjects: Project[] = [];
+  searchKeyword: string = '';
+  loading: boolean = false;
+  syncing: boolean = false;
+  sortColumn: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  
+  // Edit state
+  editingAssignmentId: number | null = null;
+  editedDates: { [key: number]: { start: string, end: string, ratio: number } } = {};
+  savingAssignmentId: number | null = null;
+  
+  // Delete state
+  deletingAssignmentId: number | null = null;
+  
+  // Team mapping and colors
+  teamMap: { [key: number]: string } = {};
+  teamColorMap: { [key: string]: string } = {};
+  
+  // Status filtering
+  selectedStatuses: Set<string> = new Set();
+  availableStatuses: string[] = [];
+
+  statuses = [
+    { value: 'In Progress', label: 'In Progress' },
+    { value: 'Backlog', label: 'Backlog' },
+    { value: 'Pending Authorization', label: 'Pending Authorization' },
+    { value: 'Internal Tracking', label: 'Internal Tracking' },
+    { value: 'Closed', label: 'Closed' },
+    { value: 'Removed', label: 'Removed' }
+  ];
+
+  constructor(
+    private projectService: ProjectService,
+    private assignmentService: AssignmentService,
+    private teamService: TeamService,
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    // Initialize selected statuses (excluding 'Closed','Removed')
+    const excludedStatuses = new Set(['Closed', 'Removed']);
+    this.selectedStatuses = new Set(
+      this.statuses
+        .filter(s => !excludedStatuses.has(s.value))
+        .map(s => s.value)
+    );
+    
+    this.loadTeams();
+    this.loadProjects();
+  }
+  
+  loadTeams(): void {
+    this.teamService.getAllTeams().subscribe({
+      next: (teams) => {
+        this.teamMap = {};
+        teams.forEach(team => {
+          this.teamMap[team.teamId] = team.teamName;
+        });
+        // Generate color map dynamically
+        this.generateTeamColors(teams.map(t => t.teamName));
+      },
+      error: (err) => console.error('Error loading teams:', err)
+    });
+  }
+
+  loadProjects(): void {
+    this.loading = true;
+    this.projectService.getAllProjects().subscribe({
+      next: (data) => {
+        this.projects = data;
+        
+        // Extract unique statuses from actual data
+        const uniqueStatuses = new Set(
+          data.map(p => p.status).filter((s): s is string => !!s)
+        );
+        this.availableStatuses = Array.from(uniqueStatuses).sort();
+        
+        this.filterProjects();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading projects:', error);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  filterProjects(): void {
+    this.filteredProjects = this.projects.filter(project => {
+      const matchesStatus = this.selectedStatuses.size === 0 || 
+                           this.selectedStatuses.has(project.status || '');
+      const matchesSearch = !this.searchKeyword || 
+        project.projectName?.toLowerCase().includes(this.searchKeyword.toLowerCase());
+      return matchesStatus && matchesSearch;
+    });
+    this.cdr.detectChanges();
+  }
+
+  toggleStatus(status: string): void {
+    if (this.selectedStatuses.has(status)) {
+      this.selectedStatuses.delete(status);
+    } else {
+      this.selectedStatuses.add(status);
+    }
+    this.filterProjects();
+  }
+
+  isStatusSelected(status: string): boolean {
+    return this.selectedStatuses.has(status);
+  }
+
+  selectAllStatuses(): void {
+    this.selectedStatuses = new Set(this.statuses.map(s => s.value));
+    this.filterProjects();
+  }
+
+  clearAllStatuses(): void {
+    this.selectedStatuses.clear();
+    this.filterProjects();
+  }
+
+  onSearchChange(): void {
+    this.filterProjects();
+  }
+
+  getTeamName(teamId?: number): string {
+    return this.teamMap[teamId || 0] || '-';
+  }
+
+  generateTeamColors(teamNames: string[]): void {
+    // Predefined color palette for consistency
+    const colors = [
+      '#2196F3', // Blue
+      '#4CAF50', // Green
+      '#FF9800', // Orange
+      '#9C27B0', // Purple
+      '#F44336', // Red
+      '#00BCD4', // Cyan
+      '#E91E63', // Pink
+      '#607D8B', // Blue Grey
+      '#795548', // Brown
+      '#3F51B5', // Indigo
+      '#009688', // Teal
+      '#FFC107', // Amber
+      '#8BC34A', // Light Green
+      '#FF5722', // Deep Orange
+      '#673AB7', // Deep Purple
+    ];
+
+    teamNames.forEach((teamName, index) => {
+      this.teamColorMap[teamName] = colors[index % colors.length];
+    });
+  }
+
+  getTeamClass(teamId?: number): string {
+    const teamName = this.getTeamName(teamId);
+    if (teamName === '-') {
+      return 'team-none';
+    }
+    return 'team-dynamic';
+  }
+
+  getTeamStyle(teamId?: number): { [key: string]: string } {
+    const teamName = this.getTeamName(teamId);
+    if (teamName === '-') {
+      return {};
+    }
+    const color = this.teamColorMap[teamName] || '#795548';
+    return {
+      'background-color': color,
+      'color': 'white'
+    };
+  }
+
+  getPriorityClass(priority?: number): string {
+    if (priority === null || priority === undefined) return '';
+    if (priority >= 8) return 'priority-high';
+    if (priority >= 5) return 'priority-medium';
+    return 'priority-low';
+  }
+
+  getUrgencyClass(urgency?: number): string {
+    if (urgency === null || urgency === undefined) return '';
+    if (urgency >= 8) return 'urgency-high';
+    if (urgency >= 5) return 'urgency-medium';
+    return 'urgency-low';
+  }
+
+  sortBy(column: string): void {
+    if (this.sortColumn === column) {
+      // Toggle direction if same column
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // New column, default to ascending
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+
+    this.filteredProjects.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (column) {
+        case 'projectName':
+          aValue = a.projectName?.toLowerCase() || '';
+          bValue = b.projectName?.toLowerCase() || '';
+          break;
+        case 'status':
+          aValue = a.status?.toLowerCase() || '';
+          bValue = b.status?.toLowerCase() || '';
+          break;
+        case 'level':
+          aValue = a.level?.toLowerCase() || '';
+          bValue = b.level?.toLowerCase() || '';
+          break;
+        case 'startDate':
+          aValue = a.startDate ? new Date(a.startDate).getTime() : 0;
+          bValue = b.startDate ? new Date(b.startDate).getTime() : 0;
+          break;
+        case 'qaReadyDate':
+          aValue = a.qaReadyDate ? new Date(a.qaReadyDate).getTime() : 0;
+          bValue = b.qaReadyDate ? new Date(b.qaReadyDate).getTime() : 0;
+          break;
+        case 'targetProdDate':
+          aValue = a.targetProdDate ? new Date(a.targetProdDate).getTime() : 0;
+          bValue = b.targetProdDate ? new Date(b.targetProdDate).getTime() : 0;
+          break;
+        case 'primaryTeam':
+          aValue = this.getTeamName(a.primaryTeamId);
+          bValue = this.getTeamName(b.primaryTeamId);
+          break;
+        case 'priority':
+          aValue = a.priority ?? -1;
+          bValue = b.priority ?? -1;
+          break;
+        case 'urgency':
+          aValue = a.urgency ?? -1;
+          bValue = b.urgency ?? -1;
+          break;
+        case 'devHours':
+          aValue = a.devHours ?? 0;
+          bValue = b.devHours ?? 0;
+          break;
+        case 'wfHours':
+          aValue = a.wfHours ?? 0;
+          bValue = b.wfHours ?? 0;
+          break;
+        case 'developers':
+          aValue = a.assignments?.length ?? 0;
+          bValue = b.assignments?.length ?? 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  getSortIcon(column: string): string {
+    if (this.sortColumn !== column) return '⇅';
+    return this.sortDirection === 'asc' ? '↑' : '↓';
+  }
+
+  getStatusClass(status?: string): string {
+    switch(status) {
+      case 'In Progress': return 'status-in-progress';
+      case 'Backlog': return 'status-backlog';
+      case 'Pending Authorization': return 'status-pending';
+      case 'Internal Tracking': return 'status-internal';
+      default: return '';
+    }
+  }
+
+  // Assignment date editing methods
+  isEditing(assignmentId?: number): boolean {
+    return this.editingAssignmentId === assignmentId;
+  }
+
+  isSaving(assignmentId?: number): boolean {
+    return this.savingAssignmentId === assignmentId;
+  }
+
+  getDeveloperPositionShort(position?: string): string {
+    if (!position) return '';
+    if (position.toLowerCase().includes('technical lead')) return 'LEAD';
+    if (position.toLowerCase().includes('developer')) return 'DEV';
+    return position.toUpperCase();
+  }
+
+  getRatioPercentage(ratio?: number): number {
+    if (ratio === null || ratio === undefined) return 0;
+    return Math.round(ratio * 100);
+  }
+
+  startEditingDates(assignment: Assignment): void {
+    if (!assignment.assignmentsId) return;
+    
+    this.editingAssignmentId = assignment.assignmentsId;
+    this.editedDates[assignment.assignmentsId] = {
+      start: assignment.startDate || '',
+      end: assignment.endDate || '',
+      ratio: assignment.ratio || 1.0
+    };
+  }
+
+  saveAssignmentDates(assignment: Assignment): void {
+    if (!assignment.assignmentsId) return;
+    
+    const edited = this.editedDates[assignment.assignmentsId];
+    this.savingAssignmentId = assignment.assignmentsId;
+    
+    // Create updated assignment object with only necessary fields
+    const updatedAssignment: any = {
+      assignmentsId: assignment.assignmentsId,
+      startDate: edited.start || null,
+      endDate: edited.end || null,
+      ratio: edited.ratio,
+      project: assignment.project ? { projectsId: assignment.project.projectsId } : null,
+      developer: assignment.developer ? { developersId: assignment.developer.developersId } : null
+    };
+    
+    this.assignmentService.updateAssignment(
+      assignment.assignmentsId,
+      updatedAssignment
+    ).subscribe({
+      next: (result) => {
+        // Update the assignment in the local data
+        assignment.startDate = result.startDate;
+        assignment.endDate = result.endDate;
+        assignment.ratio = result.ratio;
+        
+        // Clear editing state
+        this.editingAssignmentId = null;
+        this.savingAssignmentId = null;
+        delete this.editedDates[assignment.assignmentsId!];
+        
+        // Trigger change detection to update UI
+        this.cdr.detectChanges();
+        
+        console.log('Assignment dates updated successfully', result);
+      },
+      error: (err) => {
+        console.error('Error updating assignment dates:', err);
+        this.savingAssignmentId = null;
+        this.cdr.detectChanges();
+        alert('Error updating assignment dates. Please try again.');
+      },
+      complete: () => {
+        // Ensure state is cleared on completion
+        console.log('Update complete');
+      }
+    });
+  }
+
+  cancelEdit(): void {
+    this.editingAssignmentId = null;
+    this.editedDates = {};
+  }
+
+  confirmDeleteAssignment(assignmentId: number, developerName: string): void {
+    const confirmed = confirm(`Are you sure you want to remove ${developerName} from this project?`);
+    if (confirmed) {
+      this.deleteAssignment(assignmentId);
+    }
+  }
+
+  deleteAssignment(assignmentId: number): void {
+    this.deletingAssignmentId = assignmentId;
+    
+    this.assignmentService.deleteAssignment(assignmentId).subscribe({
+      next: () => {
+        // Remove assignment from all projects in memory
+        this.projects.forEach(project => {
+          if (project.assignments) {
+            project.assignments = project.assignments.filter(
+              a => a.assignmentsId !== assignmentId
+            );
+          }
+        });
+        
+        // Remove from filtered projects too
+        this.filteredProjects.forEach(project => {
+          if (project.assignments) {
+            project.assignments = project.assignments.filter(
+              a => a.assignmentsId !== assignmentId
+            );
+          }
+        });
+        
+        this.deletingAssignmentId = null;
+        this.cdr.detectChanges();
+        console.log('Developer removed successfully');
+      },
+      error: (err) => {
+        console.error('Error removing developer:', err);
+        this.deletingAssignmentId = null;
+        this.cdr.detectChanges();
+        alert('Error removing developer from project. Please try again.');
+      }
+    });
+  }
+
+  isDeleting(assignmentId?: number): boolean {
+    return this.deletingAssignmentId === assignmentId;
+  }
+
+  refreshProjects(): void {
+    this.loadTeams();
+    this.loadProjects();
+  }
+}

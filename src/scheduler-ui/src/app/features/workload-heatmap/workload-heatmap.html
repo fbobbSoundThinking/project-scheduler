@@ -1,0 +1,126 @@
+<div class="heatmap-container">
+  <header class="page-header">
+    <h1>🔥 Developer Workload Heatmap</h1>
+    <div class="header-actions">
+      <a routerLink="/projects" class="btn-back">← Back to List</a>
+    </div>
+  </header>
+
+  <div class="info-panel">
+    <div class="info-card">
+      <h3>📊 Capacity Model</h3>
+      <ul>
+        <li><strong>Hours per day:</strong> {{ HOURS_PER_DAY }}</li>
+        <li><strong>Days per week:</strong> {{ DAYS_PER_WEEK }}</li>
+        <li><strong>Capacity:</strong> {{ CAPACITY_PERCENTAGE * 100 }}%</li>
+        <li><strong>Max hours/week:</strong> {{ MAX_HOURS_PER_WEEK }}</li>
+      </ul>
+    </div>
+
+    <div class="info-card legend">
+      <h3>🎨 Color Legend</h3>
+      <div class="legend-items">
+        <div class="legend-item">
+          <span class="legend-color empty"></span>
+          <span>No allocation</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color underutilized"></span>
+          <span>Under 50% (&lt; 16h)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color moderate"></span>
+          <span>50-80% (16-26h)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color optimal"></span>
+          <span>80-100% (26-32h) ✓</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color overloaded"></span>
+          <span>100-125% (32-40h) ⚠️</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color critical"></span>
+          <span>&gt;125% (&gt;40h) 🚨</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading workload data...</div>
+
+  <div *ngIf="!loading && developers.length === 0" class="no-data">
+    <p>No developer assignments found.</p>
+  </div>
+
+  <div *ngIf="!loading && developers.length > 0" class="heatmap-content">
+    <div class="heatmap-scroll">
+      <table class="heatmap-table">
+        <thead>
+          <tr>
+            <th class="developer-col sticky-col">
+              <div class="developer-header">
+                <div class="dev-name">Developer</div>
+                <div class="dev-position">Position</div>
+                <div class="dev-avg">Avg Load</div>
+              </div>
+            </th>
+            <th *ngFor="let week of weeks" 
+                class="week-col"
+                [class.current-week]="isCurrentWeek(week.weekKey)"
+                [title]="week.startDate | date:'MMM d, y'">
+              <div class="week-header">
+                <div class="week-label">{{ week.weekLabel }}</div>
+                <div class="week-year">{{ week.startDate | date:'yyyy' }}</div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dev of developers" class="developer-row">
+            <td class="developer-col sticky-col">
+              <div class="developer-info">
+                <div class="dev-name" [title]="dev.developerName">{{ dev.developerName }}</div>
+                <div class="dev-position">{{ dev.position }}</div>
+                <div class="dev-avg">
+                  <span class="avg-hours">{{ dev.averageLoad | number:'1.0-1' }}h</span>
+                  <span class="avg-percentage">({{ getLoadPercentage(dev.averageLoad) | number:'1.0-0' }}%)</span>
+                </div>
+              </div>
+            </td>
+            <td *ngFor="let week of weeks" 
+                class="week-cell"
+                [class.current-week]="isCurrentWeek(week.weekKey)"
+                [ngClass]="getHeatmapClass(getHoursForWeek(dev, week.weekKey))"
+                [style.background-color]="getHeatmapColor(getHoursForWeek(dev, week.weekKey))"
+                [title]="dev.developerName + ' - Week ' + week.weekLabel + ': ' + (getHoursForWeek(dev, week.weekKey) | number:'1.1-1') + 'h (' + (getLoadPercentage(getHoursForWeek(dev, week.weekKey)) | number:'1.0-0') + '%)'">
+              <div class="cell-content">
+                <span class="hours">{{ getHoursForWeek(dev, week.weekKey) | number:'1.0-1' }}</span>
+                <span class="percentage">{{ getLoadPercentage(getHoursForWeek(dev, week.weekKey)) | number:'1.0-0' }}%</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="summary-stats">
+      <h3>📈 Summary Statistics</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">{{ developers.length }}</div>
+          <div class="stat-label">Total Developers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ weeks.length }}</div>
+          <div class="stat-label">Weeks Tracked</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{ MAX_HOURS_PER_WEEK }}h</div>
+          <div class="stat-label">Weekly Capacity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
