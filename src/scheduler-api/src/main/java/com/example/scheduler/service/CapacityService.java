@@ -38,6 +38,9 @@ public class CapacityService {
     @Autowired
     private ScenarioAssignmentRepository scenarioAssignmentRepository;
     
+    @Autowired
+    private AvailabilityService availabilityService;
+    
     public ConflictCheckResult checkConflict(
             Integer developerId,
             LocalDate startDate,
@@ -87,7 +90,8 @@ public class CapacityService {
             BigDecimal currentHours = weeklyHours.getOrDefault(weekStart, BigDecimal.ZERO);
             BigDecimal totalHours = currentHours.add(newHours);
             
-            BigDecimal capacityHours = new BigDecimal(MAX_HOURS_PER_WEEK);
+            // Get adjusted capacity for this developer for this week (accounts for time-off)
+            BigDecimal capacityHours = availabilityService.getAdjustedCapacity(developerId, weekStart);
             
             if (totalHours.compareTo(capacityHours) > 0) {
                 hasConflict = true;
@@ -142,9 +146,16 @@ public class CapacityService {
         
         while (!currentWeekStart.isAfter(endWeekStart)) {
             BigDecimal assignedHours = BigDecimal.ZERO;
+            BigDecimal totalCapacity = BigDecimal.ZERO;
             
-            // Sum hours for all developers in this week
+            // Sum hours and calculate adjusted capacity for all developers in this week
             for (Developer developer : developers) {
+                // Get adjusted capacity for this developer this week (accounts for time-off)
+                BigDecimal developerCapacity = availabilityService.getAdjustedCapacity(
+                    developer.getDevelopersId(), currentWeekStart
+                );
+                totalCapacity = totalCapacity.add(developerCapacity);
+                
                 List<Assignment> assignments = assignmentRepository.findByDeveloperIdWithDetails(developer.getDevelopersId());
                 
                 for (Assignment assignment : assignments) {
@@ -165,7 +176,6 @@ public class CapacityService {
                 }
             }
             
-            BigDecimal totalCapacity = new BigDecimal(MAX_HOURS_PER_WEEK * developerCount);
             BigDecimal availableHours = totalCapacity.subtract(assignedHours);
             BigDecimal utilization = totalCapacity.compareTo(BigDecimal.ZERO) > 0 
                 ? assignedHours.divide(totalCapacity, 2, RoundingMode.HALF_UP).multiply(new BigDecimal(100))
@@ -374,9 +384,16 @@ public class CapacityService {
         
         while (!currentWeekStart.isAfter(endWeekStart)) {
             BigDecimal assignedHours = BigDecimal.ZERO;
+            BigDecimal totalCapacity = BigDecimal.ZERO;
             
-            // Sum hours for all developers in this week using effective assignments
+            // Calculate adjusted capacity and sum hours for all developers in this week using effective assignments
             for (Developer developer : developers) {
+                // Get adjusted capacity for this developer this week (accounts for time-off)
+                BigDecimal developerCapacity = availabilityService.getAdjustedCapacity(
+                    developer.getDevelopersId(), currentWeekStart
+                );
+                totalCapacity = totalCapacity.add(developerCapacity);
+                
                 for (Assignment assignment : effectiveAssignments) {
                     if (assignment.getDeveloper() != null &&
                         assignment.getDeveloper().getDevelopersId().equals(developer.getDevelopersId()) &&
@@ -396,7 +413,6 @@ public class CapacityService {
                 }
             }
             
-            BigDecimal totalCapacity = new BigDecimal(MAX_HOURS_PER_WEEK * developerCount);
             BigDecimal availableHours = totalCapacity.subtract(assignedHours);
             BigDecimal utilization = totalCapacity.compareTo(BigDecimal.ZERO) > 0 
                 ? assignedHours.divide(totalCapacity, 2, RoundingMode.HALF_UP).multiply(new BigDecimal(100))
