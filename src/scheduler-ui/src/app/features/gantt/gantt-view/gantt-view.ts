@@ -499,3 +499,4 @@ export class GanttView implements OnInit, OnDestroy {
     this.filtersExpanded = !this.filtersExpanded;
   }
 }
+

@@ -1,13 +1,9 @@
 <div class="gantt-container">
-  <header class="page-header">
-    <h1>📊 Project Timeline</h1>
-    <div class="header-actions">
-      <a routerLink="/workload" class="btn-workload">Workload Heatmap</a>
-      <a routerLink="/projects" class="btn-back">← Back to List</a>
-    </div>
-  </header>
-
-  <div class="controls">
+  <div class="page-header">
+    <h1>Gantt Chart</h1>
+  </div>
+  <div class="content-wrapper">
+    <div class="controls">
     <div class="controls-header" (click)="toggleFilters()">
       <h3>🔍 Search & Filters</h3>
       <button class="toggle-btn">
@@ -123,5 +119,6 @@
       </div>
     </div> 
 
+  </div>
   </div>
 </div>

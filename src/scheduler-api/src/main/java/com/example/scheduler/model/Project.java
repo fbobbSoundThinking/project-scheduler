@@ -2,6 +2,7 @@ package com.example.scheduler.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -71,6 +72,24 @@ public class Project {
     
     @Column(name = "prj_number", length = 45)
     private String prjNumber;
+    
+    @Column(name = "actual_dev_hours", precision = 10, scale = 2)
+    private BigDecimal actualDevHours;
+    
+    @Column(name = "actual_wf_hours", precision = 10, scale = 2)
+    private BigDecimal actualWfHours;
+    
+    @Column(name = "actual_qa_hours", precision = 10, scale = 2)
+    private BigDecimal actualQaHours;
+    
+    @Column(name = "percent_complete")
+    private Byte percentComplete;
+    
+    @Column(name = "actual_start_date")
+    private LocalDate actualStartDate;
+    
+    @Column(name = "actual_end_date")
+    private LocalDate actualEndDate;
     
     @OneToMany(mappedBy = "project")
     private List<Assignment> assignments;

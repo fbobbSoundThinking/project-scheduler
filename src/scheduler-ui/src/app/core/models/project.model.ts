@@ -21,6 +21,12 @@ export interface Project {
   qaReadyDate?: string;
   itbNumber?: string;
   prjNumber?: string;
+  actualDevHours?: number;
+  actualWfHours?: number;
+  actualQaHours?: number;
+  percentComplete?: number;
+  actualStartDate?: string;
+  actualEndDate?: string;
   assignments?: Assignment[];
   subitems?: Subitem[];
 }

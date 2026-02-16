@@ -1,8 +1,10 @@
 package com.example.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -50,6 +52,12 @@ public class Subitem {
     
     @Column(name = "target_deployment_date")
     private LocalDate targetDeploymentDate;
+    
+    @Column(name = "actual_days", precision = 10, scale = 2)
+    private BigDecimal actualDays;
+    
+    @Column(name = "percent_complete")
+    private Byte percentComplete;
     
     @OneToMany(mappedBy = "subitem", cascade = CascadeType.ALL)
     private List<Assignment> assignments;

@@ -94,11 +94,37 @@ export class ProjectList implements OnInit, OnDestroy {
     this.loadTeams();
     this.loadProjects(); // Will call initializeFilterColumns after data loads
     this.loadDevelopers();
+    
+    // Prevent scroll events that go beyond table boundaries
+    setTimeout(() => {
+      const tableScroller = document.querySelector('.table-scroll-container') as HTMLElement;
+      if (tableScroller) {
+        tableScroller.addEventListener('wheel', this.preventOverScroll.bind(this), { passive: false });
+      }
+    }, 100);
+  }
+  
+  private preventOverScroll(event: WheelEvent): void {
+    const tableScroller = event.currentTarget as HTMLElement;
+    const isScrollingRight = event.deltaX > 0;
+    const isScrollingLeft = event.deltaX < 0;
+    const atRightEdge = tableScroller.scrollLeft + tableScroller.clientWidth >= tableScroller.scrollWidth;
+    const atLeftEdge = tableScroller.scrollLeft === 0;
+    
+    // Block scroll if trying to go beyond edges
+    if ((isScrollingRight && atRightEdge) || (isScrollingLeft && atLeftEdge)) {
+      event.preventDefault();
+    }
   }
   
   ngOnDestroy(): void {
     if (this.filterSubscription) {
       this.filterSubscription.unsubscribe();
+    }
+    // Clean up event listener
+    const tableScroller = document.querySelector('.table-scroll-container') as HTMLElement;
+    if (tableScroller) {
+      tableScroller.removeEventListener('wheel', this.preventOverScroll.bind(this));
     }
   }
   

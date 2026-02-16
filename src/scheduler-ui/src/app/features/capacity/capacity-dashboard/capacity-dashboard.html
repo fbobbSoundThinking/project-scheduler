@@ -1,0 +1,133 @@
+<div class="capacity-dashboard">
+  <div class="page-header">
+    <h1>Capacity Planning</h1>
+  </div>
+  <div class="content-wrapper">
+    <div class="controls-selector">
+      <div class="selector-content">
+        <div class="control-group">
+          <label>Start Date:</label>
+          <input type="date" [(ngModel)]="startDate" (change)="onDateRangeChange()" />
+        </div>
+        
+        <div class="control-group">
+          <label>Weeks:</label>
+          <input type="number" [(ngModel)]="numWeeks" (change)="onDateRangeChange()" min="1" max="52" />
+        </div>
+        
+        <div class="control-group">
+          <label>View:</label>
+          <select [(ngModel)]="viewMode">
+            <option value="hours">Available Hours</option>
+            <option value="utilization">Utilization %</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Filters -->
+    <div class="team-filters" *ngIf="teams.length > 0">
+    <label>Teams:</label>
+    <div class="filter-checkboxes">
+      <label *ngFor="let team of teams" class="checkbox-label">
+        <input 
+          type="checkbox" 
+          [checked]="teamFilters.get(team.teamId)" 
+          (change)="toggleTeamFilter(team.teamId)" />
+        {{ team.teamName }}
+      </label>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <p>Loading capacity data...</p>
+  </div>
+
+  <!-- Team Summary Cards -->
+  <div class="team-summary-cards" *ngIf="!loading && teams.length > 0">
+    <div 
+      *ngFor="let team of teams" 
+      class="team-card"
+      [class.hidden]="teamFilters.get(team.teamId) === false"
+      [ngClass]="getUtilizationColor(getTeamAverageUtilization(team))">
+      <h3>{{ team.teamName }}</h3>
+      <div class="card-stats">
+        <div class="stat">
+          <span class="label">Developers:</span>
+          <span class="value">{{ team.developerCount }}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Avg Utilization:</span>
+          <span class="value">{{ getTeamAverageUtilization(team) | number:'1.0-0' }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Capacity Grid -->
+  <div class="capacity-grid" *ngIf="!loading && teams.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th class="team-column">Team</th>
+          <ng-container *ngIf="getFilteredTeams().length > 0">
+            <th *ngFor="let week of getFilteredTeams()[0].weeks" 
+                class="week-header"
+                [class.current-week]="isCurrentWeek(week.weekStart)">
+              {{ formatWeekLabel(week.weekStart) }}
+            </th>
+          </ng-container>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let team of getFilteredTeams()">
+          <!-- Team Row -->
+          <tr class="team-row" (click)="toggleTeam(team.teamId)">
+            <td class="team-name">
+              <span class="expand-icon">{{ expandedTeams[team.teamId] ? '▼' : '▶' }}</span>
+              {{ team.teamName }}
+            </td>
+            <td *ngFor="let week of team.weeks" 
+                class="capacity-cell"
+                [ngClass]="getAvailabilityColor(week)"
+                [class.current-week]="isCurrentWeek(week.weekStart)">
+              <ng-container *ngIf="viewMode === 'hours'">
+                <div class="hours">{{ week.availableHours | number:'1.0-0' }}h avail</div>
+                <div class="hours-detail">{{ week.assignedHours | number:'1.0-0' }} / {{ week.totalCapacity | number:'1.0-0' }}h</div>
+              </ng-container>
+              <ng-container *ngIf="viewMode === 'utilization'">
+                <div class="utilization">{{ week.utilization | number:'1.0-0' }}%</div>
+              </ng-container>
+            </td>
+          </tr>
+          
+          <!-- Developer Rows (when expanded) -->
+          <ng-container *ngIf="expandedTeams[team.teamId] && developerData.has(team.teamId)">
+            <tr *ngFor="let dev of developerData.get(team.teamId)!.developers" class="developer-row">
+              <td class="developer-name">{{ dev.developerName }} <span class="dev-position">({{ dev.position }})</span></td>
+              <td *ngFor="let weekStart of developerData.get(team.teamId)!.weekStarts" 
+                  class="capacity-cell developer-cell"
+                  [ngClass]="getDeveloperCellColor(dev, weekStart)"
+                  [class.current-week]="isCurrentWeek(weekStart)">
+                <ng-container *ngIf="viewMode === 'hours'">
+                  <div class="hours">{{ getDeveloperHours(dev, weekStart) | number:'1.0-1' }}h</div>
+                  <div class="hours-detail">/ {{ MAX_HOURS_PER_WEEK }}h</div>
+                </ng-container>
+                <ng-container *ngIf="viewMode === 'utilization'">
+                  <div class="utilization">{{ getDeveloperUtilization(dev, weekStart) | number:'1.0-0' }}%</div>
+                </ng-container>
+              </td>
+            </tr>
+          </ng-container>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && teams.length === 0" class="empty-state">
+    <p>No capacity data available.</p>
+  </div>
+  </div>
+</div>

@@ -1,0 +1,362 @@
+.capacity-dashboard {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.page-header {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  margin: 0;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+
+  h1 {
+    font-size: 2rem;
+    color: #000;
+    margin: 0;
+  }
+}
+
+.content-wrapper {
+  padding: 2rem;
+}
+
+.dashboard-header {
+  margin-bottom: 1.5rem;
+  
+  h1 {
+    display: none;
+  }
+}
+
+.controls-selector {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.selector-content {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: row;
+  gap: 0.75rem;
+  align-items: center;
+  height: 52px;
+  
+  label {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+  
+  input, select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    height: 36px;
+    
+    &:focus {
+      outline: none;
+      border-color: #2196F3;
+    }
+  }
+  
+  input[type="number"] {
+    width: 80px;
+  }
+  
+  input[type="date"] {
+    width: 150px;
+  }
+  
+  select {
+    width: 150px;
+  }
+}
+
+.team-filters {
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  
+  > label {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .filter-checkboxes {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #555;
+      
+      input[type="checkbox"] {
+        cursor: pointer;
+      }
+    }
+  }
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.team-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  
+  .team-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #ccc;
+    transition: all 0.3s;
+    
+    &.hidden {
+      display: none;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    &.low {
+      border-left-color: #4caf50;
+    }
+    
+    &.medium {
+      border-left-color: #ff9800;
+    }
+    
+    &.high {
+      border-left-color: #f44336;
+    }
+    
+    h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    
+    .card-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .stat {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        
+        .label {
+          color: #666;
+        }
+        
+        .value {
+          font-weight: 600;
+          color: #333;
+        }
+      }
+    }
+  }
+}
+
+.capacity-grid {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  overflow-x: auto;
+  
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85rem;
+    
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+      
+      th {
+        background: #f8f9fa;
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #333;
+        white-space: nowrap;
+        
+        &.team-column {
+          text-align: left;
+          min-width: 150px;
+        }
+        
+        .week-header {
+          display: inline-block;
+          padding: 0.5rem;
+          
+          &.current-week {
+            font-weight: 700;
+            color: #2196F3;
+            border-bottom: 2px solid #2196F3;
+          }
+        }
+      }
+    }
+    
+    tbody {
+      .team-row {
+        cursor: pointer;
+        transition: background 0.2s;
+        
+        &:hover {
+          background: #f8f9fa;
+        }
+        
+        .team-name {
+          font-weight: 600;
+          padding: 1rem;
+          color: #333;
+          border-right: 2px solid #dee2e6;
+          
+          .expand-icon {
+            display: inline-block;
+            width: 20px;
+            color: #666;
+            font-size: 0.8rem;
+          }
+        }
+      }
+      
+      .developer-row {
+        background: #f9f9f9;
+        
+        &:hover {
+          background: #f0f0f0;
+        }
+        
+        .developer-name {
+          padding: 0.75rem 1rem 0.75rem 2.5rem;
+          color: #555;
+          font-size: 0.9rem;
+          border-right: 2px solid #dee2e6;
+          
+          .dev-position {
+            color: #999;
+            font-size: 0.75rem;
+            font-weight: normal;
+            margin-left: 0.5rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+.capacity-cell {
+  padding: 0.5rem;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  transition: all 0.2s;
+  min-width: 80px;
+  
+  &.current-week {
+    border: 2px solid #2196F3;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+  }
+  
+  // Availability colors (for team rows)
+  &.high-avail {
+    background: #c8e6c9;
+  }
+  
+  &.medium-avail {
+    background: #fff9c4;
+  }
+  
+  &.low-avail {
+    background: #ffcdd2;
+  }
+  
+  // Utilization colors (for developer rows)
+  &.low {
+    background: #c8e6c9;
+  }
+  
+  &.medium {
+    background: #fff9c4;
+  }
+  
+  &.high {
+    background: #ffcdd2;
+  }
+  
+  .hours {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.85rem;
+  }
+  
+  .hours-detail {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.1rem;
+  }
+  
+  .utilization {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+  }
+}
+
+.developer-cell {
+  font-size: 0.8rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}

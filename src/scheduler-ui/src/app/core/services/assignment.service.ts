@@ -40,4 +40,26 @@ export class AssignmentService {
   deleteAssignment(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  checkConflict(developerId: number, startDate: string, endDate: string, ratio: number, excludeAssignmentId?: number): Observable<ConflictCheckResult> {
+    let params = `developerId=${developerId}&startDate=${startDate}&endDate=${endDate}&ratio=${ratio}`;
+    if (excludeAssignmentId) {
+      params += `&excludeAssignmentId=${excludeAssignmentId}`;
+    }
+    return this.http.get<ConflictCheckResult>(`${this.apiUrl}/conflict-check?${params}`);
+  }
+}
+
+export interface ConflictCheckResult {
+  hasConflict: boolean;
+  weeks: WeekConflict[];
+}
+
+export interface WeekConflict {
+  weekStart: string;
+  currentHours: number;
+  newHours: number;
+  totalHours: number;
+  capacityHours: number;
+  overageHours: number;
 }

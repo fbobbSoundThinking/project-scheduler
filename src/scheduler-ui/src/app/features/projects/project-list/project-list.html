@@ -1,27 +1,8 @@
 <div class="project-list-page">
-  <div class="fixed-width-content">
-    <header class="page-header">
-      <div class="header-content">
-        <div class="header-text">
-          <h1>Project Scheduler</h1>
-          <p class="subtitle">Manage and track development projects</p>
-        </div>
-        <div class="header-buttons">
-          <a routerLink="/gantt" class="btn-gantt-view">📊 Timeline View</a>
-          <a routerLink="/workload" class="btn-workload-view">🔥 Workload Heatmap</a>
-          <button 
-            class="btn-sync-monday"
-            (click)="syncFromMonday()"
-            [disabled]="syncing"
-            title="Update projects from Monday.com">
-            <span *ngIf="!syncing">🔄 Update from Monday.com</span>
-            <span *ngIf="syncing">⏳ Syncing...</span>
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <div class="controls">
+  <div class="page-header">
+    <h1>Project List</h1>
+  </div>
+  <div class="search-section">
     <div class="search-box">
       <input 
         type="text" 
@@ -31,7 +12,6 @@
         class="search-input"
       />
     </div>
-
     <div class="filter-box">
       <div class="group-filter-container">
         <label class="filter-label">Group Filter:</label>
@@ -53,12 +33,12 @@
     
     <div class="advanced-filter-box">
       <button class="btn-advanced-filter" (click)="openAdvancedFilter()">
-        <span class="filter-icon">⚡</span>
         Advanced Filter
         <span class="filter-count" *ngIf="activeAdvancedFilterCount > 0">{{activeAdvancedFilterCount}}</span>
       </button>
     </div>
 
+    <div class="controls">
     <div class="stats">
       <span class="stat-item">
         Total: <strong>{{projects.length}}</strong>
@@ -71,7 +51,8 @@
       </span>
     </div>
   </div>
-  </div> <!-- end fixed-width-content -->
+  </div> <!-- end search-section -->
+  <div class="fixed-width-content">
 
   <div *ngIf="loading" class="loading">
     <div class="spinner"></div>

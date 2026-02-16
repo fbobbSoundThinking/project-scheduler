@@ -13,6 +13,8 @@ export interface Subitem {
   qaStartDate?: string;
   qaEndDate?: string;
   targetDeploymentDate?: string;
+  actualDays?: number;
+  percentComplete?: number;
   project?: Project;
   assignments?: Assignment[];
 }

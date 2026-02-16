@@ -1,0 +1,252 @@
+<div class="scenario-planner-container">
+  <div class="page-header">
+    <h1>What-If / Scenario Planning</h1>
+  </div>
+  <div class="content-wrapper">
+    <!-- Section A: Scenario Selector (top bar) -->
+  <div class="scenario-selector">
+    <div class="selector-content">
+      <div class="scenario-dropdown">
+        <label>Active Scenario:</label>
+        <select [(ngModel)]="activeScenario" (ngModelChange)="selectScenario($event)">
+          <option [ngValue]="null">-- Select Scenario --</option>
+          <option *ngFor="let s of scenarios" [ngValue]="s">
+            {{ s.name }} ({{ s.status }})
+          </option>
+        </select>
+
+        <div class="scenario-actions">
+          <button
+            class="btn btn-primary"
+            (click)="isCreatingScenario = true"
+            [disabled]="isCreatingScenario"
+          >
+            New Scenario
+          </button>
+
+          <button
+            class="btn btn-danger"
+            (click)="showDeleteConfirmDialog(activeScenario?.scenarioId || 0)"
+            [disabled]="!activeScenario"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Create scenario form -->
+      <div class="scenario-create-form" *ngIf="isCreatingScenario">
+        <h3>Create New Scenario</h3>
+        <div class="form-group">
+          <label>Scenario Name:</label>
+          <input type="text" [(ngModel)]="newScenarioName" placeholder="e.g., Team B Reallocation" />
+        </div>
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea [(ngModel)]="newScenarioDescription" placeholder="Optional description"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-success" (click)="createScenario()">Create</button>
+          <button class="btn btn-secondary" (click)="cancelCreate()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Delete confirmation -->
+      <div class="confirm-dialog" *ngIf="showDeleteConfirm">
+        <p>Delete scenario "{{ activeScenario?.name }}"? This cannot be undone.</p>
+        <button class="btn btn-danger" (click)="deleteScenario(deleteConfirmId)">Delete</button>
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content (if scenario selected) -->
+  <div class="scenario-content" *ngIf="activeScenario">
+    <!-- Summary Bar -->
+    <div class="summary-bar" *ngIf="teamComparisons.length > 0">
+      <div class="summary-stat">
+        <span class="label">Hours Added</span>
+        <span class="value positive">+{{ summaryStats.totalHoursAdded.toFixed(1) }}</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Hours Removed</span>
+        <span class="value negative">-{{ summaryStats.totalHoursRemoved.toFixed(1) }}</span>
+      </div>
+      <div class="summary-stat">
+        <span class="label">Net Change</span>
+        <span class="value" [class]="summaryStats.netChange > 0 ? 'positive' : summaryStats.netChange < 0 ? 'negative' : 'neutral'">
+          {{ summaryStats.netChange > 0 ? '+' : '' }}{{ summaryStats.netChange.toFixed(1) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- Section B: Change Editor (left panel) -->
+      <div class="change-editor">
+        <h3>Changes</h3>
+
+        <div class="changes-list">
+          <div *ngIf="changes.length === 0" class="no-changes">No changes yet</div>
+
+          <div *ngFor="let change of changes" class="change-item" [class]="'change-' + change.changeType.toLowerCase()">
+            <div class="change-header">
+              <span class="change-badge" [class]="'badge-' + change.changeType.toLowerCase()">
+                {{ change.changeType }}
+              </span>
+              <button class="btn-remove" (click)="removeChange(change.scenarioAssignmentId)" title="Remove change">
+                ×
+              </button>
+            </div>
+
+            <div class="change-details">
+              <div *ngIf="change.changeType !== 'DELETE'" class="detail-row">
+                <strong>Project:</strong> {{ getProjectName(change.projectId) }}
+              </div>
+              <div class="detail-row">
+                <strong>Developer:</strong> {{ getDeveloperName(change.developerId) }}
+              </div>
+              <div *ngIf="change.startDate" class="detail-row">
+                <strong>Dates:</strong> {{ change.startDate }} to {{ change.endDate }}
+              </div>
+              <div *ngIf="change.ratio" class="detail-row">
+                <strong>Allocation:</strong> {{ (change.ratio * 100).toFixed(0) }}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add change form -->
+        <div class="add-change-section">
+          <button
+            class="btn btn-primary btn-block"
+            (click)="isAddingChange = true"
+            [disabled]="isAddingChange"
+          >
+            Add Assignment
+          </button>
+
+          <div class="add-change-form" *ngIf="isAddingChange">
+            <h4>Add New Assignment</h4>
+
+            <div class="form-group">
+              <label>Change Type:</label>
+              <select [(ngModel)]="newChange.changeType">
+                <option value="ADD">Add New Assignment</option>
+                <option value="MODIFY">Modify Existing</option>
+                <option value="DELETE">Remove Assignment</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="newChange.changeType !== 'DELETE'">
+              <label>Project:</label>
+              <select [(ngModel)]="newChange.projectId">
+                <option [ngValue]="null">-- Select Project --</option>
+                <option *ngFor="let p of projects" [value]="p.projectsId">{{ p.projectName }}</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Developer:</label>
+              <select [(ngModel)]="newChange.developerId">
+                <option [ngValue]="null">-- Select Developer --</option>
+                <option *ngFor="let d of developers" [value]="d.developersId">{{ d.fullName }}</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="newChange.changeType !== 'DELETE'">
+              <label>Start Date:</label>
+              <input type="date" [(ngModel)]="newChange.startDate" />
+            </div>
+
+            <div class="form-group" *ngIf="newChange.changeType !== 'DELETE'">
+              <label>End Date:</label>
+              <input type="date" [(ngModel)]="newChange.endDate" />
+            </div>
+
+            <div class="form-group" *ngIf="newChange.changeType !== 'DELETE'">
+              <label>Allocation (%):</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                [(ngModel)]="newChange.ratio"
+                (change)="newChange.ratio = (newChange.ratio || 0) / 100"
+              />
+              <span class="ratio-value">{{ ((newChange.ratio || 0) * 100).toFixed(0) }}%</span>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-success" (click)="addChange()">Add</button>
+              <button class="btn btn-secondary" (click)="cancelAddChange()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C: Impact Preview (right panel) -->
+      <div class="impact-preview">
+        <h3>Scenario Impact</h3>
+
+        <div class="impact-content">
+          <div *ngIf="teamComparisons.length === 0" class="no-data">
+            Select a scenario or add changes to preview impact
+          </div>
+
+          <div *ngFor="let comparison of teamComparisons" class="team-comparison-block">
+            <h4>{{ comparison.teamName }}</h4>
+
+            <div class="comparison-grid">
+              <div class="grid-header week-col">Week</div>
+              <div class="grid-header baseline-col">Baseline</div>
+              <div class="grid-header scenario-col">Scenario</div>
+              <div class="grid-header delta-col">Delta</div>
+
+              <ng-container *ngFor="let delta of comparison.weekDeltas">
+                <div class="grid-row week-col">{{ delta.weekStart }}</div>
+
+                <div class="grid-row baseline-col">
+                  <div class="hours">{{ delta.baselineHours.toFixed(1) }}h</div>
+                  <div class="utilization" [class.high]="delta.baselineUtilization >= 90">
+                    {{ delta.baselineUtilization.toFixed(0) }}%
+                  </div>
+                </div>
+
+                <div class="grid-row scenario-col">
+                  <div class="hours">{{ delta.scenarioHours.toFixed(1) }}h</div>
+                  <div class="utilization" [class.high]="delta.scenarioUtilization >= 90">
+                    {{ delta.scenarioUtilization.toFixed(0) }}%
+                  </div>
+                </div>
+
+                <div class="grid-row delta-col" [class]="getDeltaClass(delta.delta)">
+                  <div class="delta-icon">{{ getDeltaIcon(delta.delta) }}</div>
+                  <div class="delta-hours">{{ delta.delta > 0 ? '+' : '' }}{{ delta.delta.toFixed(1) }}h</div>
+                  <div class="delta-util">{{ delta.scenarioUtilization - delta.baselineUtilization > 0 ? '+' : '' }}{{ (delta.scenarioUtilization - delta.baselineUtilization).toFixed(0) }}%</div>
+                </div>
+              </ng-container>
+            </div>
+
+            <div class="team-total">
+              <span>Net Change:</span>
+              <span [class]="comparison.totalDeltaHours > 0 ? 'positive' : comparison.totalDeltaHours < 0 ? 'negative' : 'neutral'">
+                {{ comparison.totalDeltaHours > 0 ? '+' : '' }}{{ comparison.totalDeltaHours.toFixed(1) }} hours
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section D: Actions (bottom bar) -->
+    <div class="scenario-actions-bar">
+      <button class="btn btn-success btn-large" (click)="applyScenario()">
+        Apply Scenario
+      </button>
+      <span class="status-badge" [class]="'status-' + activeScenario.status.toLowerCase()">
+        Status: {{ activeScenario.status }}
+      </span>
+    </div>
+  </div>
+  </div>
+</div>

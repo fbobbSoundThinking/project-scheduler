@@ -8,10 +8,13 @@ import com.example.scheduler.repository.AssignmentRepository;
 import com.example.scheduler.repository.DeveloperRepository;
 import com.example.scheduler.repository.ProjectRepository;
 import com.example.scheduler.repository.SubitemRepository;
+import com.example.scheduler.service.CapacityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +35,9 @@ public class AssignmentController {
     
     @Autowired
     private DeveloperRepository developerRepository;
+    
+    @Autowired
+    private CapacityService capacityService;
     
     @GetMapping
     public List<Assignment> getAllAssignments() {
@@ -159,6 +165,28 @@ public class AssignmentController {
                     return ResponseEntity.ok().<Void>build();
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/conflict-check")
+    public ResponseEntity<?> checkConflict(
+            @RequestParam Integer developerId,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @RequestParam Double ratio,
+            @RequestParam(required = false) Integer excludeAssignmentId) {
+        try {
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
+            BigDecimal ratioDecimal = BigDecimal.valueOf(ratio);
+            
+            CapacityService.ConflictCheckResult result = capacityService.checkConflict(
+                developerId, start, end, ratioDecimal, excludeAssignmentId
+            );
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error checking conflict: " + e.getMessage());
+        }
     }
     
     private Integer parseInteger(Object value) {
