@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { TimeOffService, DeveloperTimeOff } from '../../../core/services/time-off.service';
 import { HolidayService, CompanyHoliday } from '../../../core/services/holiday.service';
 import { DeveloperService } from '../../../core/services/developer.service';
@@ -57,9 +58,9 @@ export class TimeOffManagement implements OnInit {
     this.loading = true;
     
     Promise.all([
-      this.developerService.getAllDevelopers().toPromise(),
-      this.timeOffService.getAllTimeOff().toPromise(),
-      this.holidayService.getAllHolidays(this.selectedYear).toPromise()
+      firstValueFrom(this.developerService.getAllDevelopers()),
+      firstValueFrom(this.timeOffService.getAllTimeOff()),
+      firstValueFrom(this.holidayService.getAllHolidays(this.selectedYear))
     ]).then(([developers, timeOff, holidays]) => {
       this.developers = developers || [];
       this.timeOffList = timeOff || [];
