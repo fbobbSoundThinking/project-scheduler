@@ -1,0 +1,170 @@
+<div class="time-off-container">
+  <h1>Time-Off Management</h1>
+
+  <div *ngIf="loading" class="loading">Loading...</div>
+
+  <div *ngIf="!loading" class="content">
+    <!-- Developer Time Off Section -->
+    <section class="section time-off-section">
+      <h2>Developer Time Off</h2>
+
+      <!-- Add Time Off Form -->
+      <div class="add-form">
+        <h3>Add Time Off</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Developer:</label>
+            <select [(ngModel)]="newTimeOff.developer.developersId" class="form-control">
+              <option [value]="0">Select Developer</option>
+              <option *ngFor="let dev of developers" [value]="dev.developersId">
+                {{ dev.firstName }} {{ dev.lastName }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Type:</label>
+            <select [(ngModel)]="newTimeOff.type" class="form-control">
+              <option *ngFor="let type of timeOffTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Start Date:</label>
+            <input type="date" [(ngModel)]="newTimeOff.startDate" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>End Date:</label>
+            <input type="date" [(ngModel)]="newTimeOff.endDate" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Note:</label>
+            <input type="text" [(ngModel)]="newTimeOff.note" class="form-control" placeholder="Optional" />
+          </div>
+          <div class="form-group">
+            <button (click)="addTimeOff()" class="btn btn-primary">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Off List -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Developer</th>
+              <th>Type</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let timeOff of timeOffList">
+              <ng-container *ngIf="editingTimeOff?.developerTimeOffId !== timeOff.developerTimeOffId; else editingTimeOffRow">
+                <td>{{ getDeveloperName(timeOff.developer.developersId) }}</td>
+                <td>{{ timeOff.type }}</td>
+                <td>{{ formatDate(timeOff.startDate) }}</td>
+                <td>{{ formatDate(timeOff.endDate) }}</td>
+                <td>{{ timeOff.note }}</td>
+                <td>
+                  <button (click)="editTimeOff(timeOff)" class="btn btn-sm btn-secondary">Edit</button>
+                  <button (click)="deleteTimeOff(timeOff)" class="btn btn-sm btn-danger">Delete</button>
+                </td>
+              </ng-container>
+              <ng-template #editingTimeOffRow>
+                <td>
+                  <select [(ngModel)]="editingTimeOff!.developer.developersId" class="form-control">
+                    <option *ngFor="let dev of developers" [value]="dev.developersId">
+                      {{ dev.firstName }} {{ dev.lastName }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <select [(ngModel)]="editingTimeOff!.type" class="form-control">
+                    <option *ngFor="let type of timeOffTypes" [value]="type">{{ type }}</option>
+                  </select>
+                </td>
+                <td><input type="date" [(ngModel)]="editingTimeOff!.startDate" class="form-control" /></td>
+                <td><input type="date" [(ngModel)]="editingTimeOff!.endDate" class="form-control" /></td>
+                <td><input type="text" [(ngModel)]="editingTimeOff!.note" class="form-control" /></td>
+                <td>
+                  <button (click)="saveTimeOff()" class="btn btn-sm btn-primary">Save</button>
+                  <button (click)="cancelEditTimeOff()" class="btn btn-sm btn-secondary">Cancel</button>
+                </td>
+              </ng-template>
+            </tr>
+            <tr *ngIf="timeOffList.length === 0">
+              <td colspan="6" class="no-data">No time-off entries found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Company Holidays Section -->
+    <section class="section holidays-section">
+      <div class="section-header">
+        <h2>Company Holidays</h2>
+        <div class="year-selector">
+          <button (click)="changeYear(selectedYear - 1)" class="btn btn-sm">← {{ selectedYear - 1 }}</button>
+          <span class="current-year">{{ selectedYear }}</span>
+          <button (click)="changeYear(selectedYear + 1)" class="btn btn-sm">{{ selectedYear + 1 }} →</button>
+        </div>
+      </div>
+
+      <!-- Add Holiday Form -->
+      <div class="add-form">
+        <h3>Add Holiday</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date:</label>
+            <input type="date" [(ngModel)]="newHoliday.holidayDate" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Name:</label>
+            <input type="text" [(ngModel)]="newHoliday.name" class="form-control" placeholder="e.g., New Year's Day" />
+          </div>
+          <div class="form-group">
+            <button (click)="addHoliday()" class="btn btn-primary">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holidays List -->
+      <div class="data-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let holiday of holidaysList">
+              <ng-container *ngIf="editingHoliday?.companyHolidayId !== holiday.companyHolidayId; else editingHolidayRow">
+                <td>{{ formatDate(holiday.holidayDate) }}</td>
+                <td>{{ holiday.name }}</td>
+                <td>
+                  <button (click)="editHoliday(holiday)" class="btn btn-sm btn-secondary">Edit</button>
+                  <button (click)="deleteHoliday(holiday)" class="btn btn-sm btn-danger">Delete</button>
+                </td>
+              </ng-container>
+              <ng-template #editingHolidayRow>
+                <td><input type="date" [(ngModel)]="editingHoliday!.holidayDate" class="form-control" /></td>
+                <td><input type="text" [(ngModel)]="editingHoliday!.name" class="form-control" /></td>
+                <td>
+                  <button (click)="saveHoliday()" class="btn btn-sm btn-primary">Save</button>
+                  <button (click)="cancelEditHoliday()" class="btn btn-sm btn-secondary">Cancel</button>
+                </td>
+              </ng-template>
+            </tr>
+            <tr *ngIf="holidaysList.length === 0">
+              <td colspan="3" class="no-data">No holidays found for {{ selectedYear }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>

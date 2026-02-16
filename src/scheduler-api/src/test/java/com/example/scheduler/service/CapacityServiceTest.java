@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,6 +28,9 @@ class CapacityServiceTest {
 
     @Mock
     private ScenarioAssignmentRepository scenarioAssignmentRepository;
+    
+    @Mock
+    private AvailabilityService availabilityService;
 
     @InjectMocks
     private CapacityService capacityService;
@@ -55,6 +60,10 @@ class CapacityServiceTest {
 
         when(assignmentRepository.findByDeveloperIdWithDetails(developerId))
             .thenReturn(new ArrayList<>());
+        
+        // Mock the availabilityService to return 32 hours capacity (no time-off)
+        when(availabilityService.getAdjustedCapacity(anyInt(), any(LocalDate.class)))
+            .thenReturn(new BigDecimal("32"));
 
         // When
         CapacityService.ConflictCheckResult result = capacityService.checkConflict(
@@ -88,6 +97,10 @@ class CapacityServiceTest {
 
         when(assignmentRepository.findByDeveloperIdWithDetails(developerId))
             .thenReturn(existingAssignments);
+        
+        // Mock the availabilityService to return 32 hours capacity (no time-off)
+        when(availabilityService.getAdjustedCapacity(anyInt(), any(LocalDate.class)))
+            .thenReturn(new BigDecimal("32"));
 
         // When: Adding 16 hours to existing 24 hours = 40 hours (over 32 capacity)
         CapacityService.ConflictCheckResult result = capacityService.checkConflict(
@@ -125,6 +138,10 @@ class CapacityServiceTest {
 
         when(assignmentRepository.findByDeveloperIdWithDetails(developerId))
             .thenReturn(existingAssignments);
+        
+        // Mock the availabilityService to return 32 hours capacity (no time-off)
+        when(availabilityService.getAdjustedCapacity(anyInt(), any(LocalDate.class)))
+            .thenReturn(new BigDecimal("32"));
 
         // When: Editing the same assignment (should exclude it from conflict check)
         CapacityService.ConflictCheckResult result = capacityService.checkConflict(
